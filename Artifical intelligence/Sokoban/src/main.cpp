@@ -8,7 +8,13 @@
 
 using namespace std;
 
-int heuristic(vector<vector<char>> map,int f,int s,int f2,int s2){
+
+double distance_BetweenP(int f,int s,int f2,int s2){
+    return sqrt( ( (f2-f)*(f2-f) ) + ( (s2-s)*(s2-s) ) );
+
+}
+
+int heuristic(vector<vector<char>> map,int f,int s){
     int au1=0;
     int a=1000;
     int f2;
@@ -16,7 +22,7 @@ int heuristic(vector<vector<char>> map,int f,int s,int f2,int s2){
     for (vector<char>& v: map){
         int au2=0;
         for (char& c: v){
-            if(c=='.' && ( distance(f,s,au1,au2)<a ){
+            if(c=='.' && ( distance_BetweenP(f,s,au1,au2)<a ) ){
                 f2=au1;
                 s2=au2;
             }
@@ -25,49 +31,46 @@ int heuristic(vector<vector<char>> map,int f,int s,int f2,int s2){
         au1++;
 
     }
-    int value=distance(f,s,f2,s2)
+    double value=distance_BetweenP(f,s,f2,s2);
     return value;
 
 } 
 
-double distance(int f,int s,int f2,int s2){
-    return sqrt( ( (f2-f)*(f2-f) ) + ( (s2-s)*(s2-s) ) )
 
-}
 
-tuple<int,int,char> choose_movement(vector<vector<char>> map,int f,int s,int f2, int s2,vector<vector<int>> visited,string solution)
+tuple<int,int,char> choose_movement(vector<vector<char>> map,int f,int s,vector<vector<int>> visited,string solution)
 {
     tuple<int,int,char> mov=make_tuple(f,s,' ');
     int toph=10000;
 
-    if( heuristic(map,f,s-1,f2,s2)<toph && (map[f][s-1]==' ' || map[f][s-1]=='.') )
+    if( heuristic(map,f,s-1)<toph && (map[f][s-1]==' ' || map[f][s-1]=='.') )
     {
         mov=make_tuple(f,s-1,'R');
-        toph=heuristic(map,f,s-1,f2,s2);
+        toph=heuristic(map,f,s-1);
         cout << "heuristic R" << toph;
 
     }
 
-    if( heuristic(map,f+1,s,f2,s2)<toph && (map[f+1][s]==' ' || map[f+1][s]=='.') )
+    if( heuristic(map,f+1,s)<toph && (map[f+1][s]==' ' || map[f+1][s]=='.') )
     {
         mov=make_tuple(f+1,s,'D');
-        toph=heuristic(map,f+1,s,f2,s2);
+        toph=heuristic(map,f+1,s);
         cout << "heuristic D" << toph;
 
     }
 
-    if( heuristic(map,f,s+1,f2,s2)<toph && (map[f][s+1]==' ' || map[f][s+1]=='.') )
+    if( heuristic(map,f,s+1)<toph && (map[f][s+1]==' ' || map[f][s+1]=='.') )
     {
         mov=make_tuple(f,s+1,'L');
-        toph=heuristic(map,f,s+1,f2,s2);
+        toph=heuristic(map,f,s+1);
         cout << "heuristic L" << toph;
 
     }
 
-    if( heuristic(map,f-1,s,f2,s2)<toph && (map[f-1][s]==' ' || map[f-1][s]=='.') )
+    if( heuristic(map,f-1,s)<toph && (map[f-1][s]==' ' || map[f-1][s]=='.') )
     {
         mov=make_tuple(f-1,s,'U');
-        toph=heuristic(map,f-1,s,f2,s2);
+        toph=heuristic(map,f-1,s);
         cout << "heuristic U" << toph;
 
     }
@@ -128,10 +131,6 @@ int main(int argc, char* argv[]) {
                 s=aux2;
                 found=true;
               }
-              if(c=='.'){
-                f2=aux;
-                s2=aux2;
-              }
               aux2++;
 
             }
@@ -161,7 +160,7 @@ int main(int argc, char* argv[]) {
             while (!goal && aux3!=5)
             {
                 aux3++;
-                tuple<int,int,char> mov = choose_movement(map,f,s,f2,s2,visited,solution);
+                tuple<int,int,char> mov = choose_movement(map,f,s,visited,solution);
                 visited[get<0>(mov)][get<1>(mov)]++;
                 if (map[get<0>(mov)][get<1>(mov)]=='.')
                 {
