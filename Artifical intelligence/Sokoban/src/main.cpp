@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 	
     bool verbose=true;
 	if (argc < 3) { 
-        cout << "Usage is -in <infile> -out <outdir>\n"; // Inform the user of how to use the program
+        //cout << "Usage is -in <infile> -out <outdir>\n"; // Inform the user of how to use the program
         cin.get();
         exit(0);
     } else { // if we got enough parameters...
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
         	if(i + 1 != argc){
             	if (strcmp(argv[i], "-f")) {
               		myFile = argv[i+2];
-              		cout << "Using file: " << myFile << '\n';
+              		//cout << "Using file: " << myFile << '\n';
             	}
             //std::cout << argv[i] << " ";
             }
@@ -155,16 +155,16 @@ int main(int argc, char* argv[]) {
             }
             while (!goal && aux3!=5)
             {
-                if(verbose){
-                    for(vector<char>& v : map)
-                    {
-                        for(char& ve : v)
-                        {
-                            cout << ve;
-                        } 
-                        cout << '\n';
-                    }
-                }
+                // if(verbose){
+                //     for(vector<char>& v : map)
+                //     {
+                //         for(char& ve : v)
+                //         {
+                //             cout << ve;
+                //         } 
+                //         cout << '\n';
+                //     }
+                // }
                 aux3++;
                 tuple<int,int,char> mov = choose_movement(map,f,s,visited,solution);
                 visited[get<0>(mov)][get<1>(mov)]++;
