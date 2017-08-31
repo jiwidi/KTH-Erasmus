@@ -43,35 +43,31 @@ tuple<int,int,char> choose_movement(vector<vector<char>> map,int f,int s,vector<
     tuple<int,int,char> mov=make_tuple(f,s,' ');
     int toph=10000;
 
-    if( heuristic(map,f,s-1)<toph && (map[f][s-1]==' ' || map[f][s-1]=='.') )
+    if( heuristic(map,f,s-1)<toph && (map[f][s-1]==' ' || map[f][s-1]=='.') )//&& visited[f][s-1]<3)
     {
         mov=make_tuple(f,s-1,'R');
         toph=heuristic(map,f,s-1);
-        cout << "heuristic R" << toph;
 
     }
 
-    if( heuristic(map,f+1,s)<toph && (map[f+1][s]==' ' || map[f+1][s]=='.') )
+    if( heuristic(map,f+1,s)<toph && (map[f+1][s]==' ' || map[f+1][s]=='.') )//&& visited[f+1][s]<3)
     {
         mov=make_tuple(f+1,s,'D');
         toph=heuristic(map,f+1,s);
-        cout << "heuristic D" << toph;
 
     }
 
-    if( heuristic(map,f,s+1)<toph && (map[f][s+1]==' ' || map[f][s+1]=='.') )
+    if( heuristic(map,f,s+1)<toph && (map[f][s+1]==' ' || map[f][s+1]=='.') )//&& visited[f][s+1]<3)
     {
         mov=make_tuple(f,s+1,'L');
         toph=heuristic(map,f,s+1);
-        cout << "heuristic L" << toph;
 
     }
 
-    if( heuristic(map,f-1,s)<toph && (map[f-1][s]==' ' || map[f-1][s]=='.') )
+    if( heuristic(map,f-1,s)<toph && (map[f-1][s]==' ' || map[f-1][s]=='.') )//&& visited[f-1][s]<3)
     {
         mov=make_tuple(f-1,s,'U');
         toph=heuristic(map,f-1,s);
-        cout << "heuristic U" << toph;
 
     }
 
@@ -82,7 +78,7 @@ tuple<int,int,char> choose_movement(vector<vector<char>> map,int f,int s,vector<
 }
 int main(int argc, char* argv[]) {
 	
-
+    bool verbose=true;
 	if (argc < 3) { 
         cout << "Usage is -in <infile> -out <outdir>\n"; // Inform the user of how to use the program
         cin.get();
@@ -92,9 +88,8 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < argc; i++) { 
         	if(i + 1 != argc){
             	if (strcmp(argv[i], "-f")) {
-              		cout << "Hi \n";
               		myFile = argv[i+2];
-              		cout << myFile << '\n';
+              		cout << "Using file: " << myFile << '\n';
             	}
             //std::cout << argv[i] << " ";
             }
@@ -116,12 +111,10 @@ int main(int argc, char* argv[]) {
         int aux=0;
         int aux2=0;
         int f,s,f2,s2;
-        bool found=false;
-        while (getline(infile, line))
+        bool found1=false; //player detected
+        bool found2=false; //goal detected
+        while (getline(infile, line)) //create a matrix(vector of vectors) that represent the map from the file
         {
-
-            cout << line << '\n';
-
             aux2=0;
             for(char& c : line) {
               map[aux].push_back(c);
@@ -129,7 +122,10 @@ int main(int argc, char* argv[]) {
               if(c=='@'){
                 f=aux;
                 s=aux2;
-                found=true;
+                found1=true;
+              }
+              if(c=='.'){
+                found2=true;
               }
               aux2++;
 
@@ -137,15 +133,15 @@ int main(int argc, char* argv[]) {
             aux++;  
         }
         
-        for(vector<char>& v : map)
-        {
-            for(char& ve : v)
-            {
-                cout << ve;
-            } 
-            cout << '\n';
-        }
-        if(found)
+        // for(vector<char>& v : map) //Print the map, testing purposes
+        // {
+        //     for(char& ve : v)
+        //     {
+        //         cout << ve;
+        //     } 
+        //     cout << '\n';
+        // }
+        if(found1 && found2)
         {   
             bool goal=false;
             string solution;
@@ -159,6 +155,16 @@ int main(int argc, char* argv[]) {
             }
             while (!goal && aux3!=5)
             {
+                if(verbose){
+                    for(vector<char>& v : map)
+                    {
+                        for(char& ve : v)
+                        {
+                            cout << ve;
+                        } 
+                        cout << '\n';
+                    }
+                }
                 aux3++;
                 tuple<int,int,char> mov = choose_movement(map,f,s,visited,solution);
                 visited[get<0>(mov)][get<1>(mov)]++;
@@ -166,17 +172,11 @@ int main(int argc, char* argv[]) {
                 {
                     goal=true;
                 }
-                cout << "Movement \n ";
-                cout << get<0>(mov); //<<get<1>(mov);
-                cout << ' ';
-                cout << get<1>(mov);
-                cout << '\n';
-                cout << get<2>(mov) << '\n';
 
-                if (get<2>(mov)==' '){
+                if (get<2>(mov)==' '){ //Reached end or stop
                     goal=true;
                 }
-                else{
+                else{ //Refresh map with new movement
                     map[get<0>(mov)][get<1>(mov)]='@';
                     map[f][s]=' ';
                 }
@@ -184,28 +184,14 @@ int main(int argc, char* argv[]) {
                 f=get<0>(mov);
                 s=get<1>(mov);
                 solution+=get<2>(mov);
-                for(vector<char>& v : map)
-                {
-                    for(char& ve : v)
-                    {
-                        cout << ve;
-                    } 
-                    cout << '\n';
-                }
+
+
                 getchar();
 
 
             }
             cout << solution;
         }
-        
-        // cout << '\n';
-        
-        
-        // cout << get<0>(mov); //<<get<1>(mov);
-        // cout << '\n';
-        // cout << get<1>(mov);
-        // cout << '\n';
         return 0;
     }
 
