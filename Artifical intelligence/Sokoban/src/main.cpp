@@ -34,7 +34,7 @@ int heuristic(vector<vector<char>> map,int f,int s){
     double value=distance_BetweenP(f,s,f2,s2);
     return value;
 
-} 
+}
 
 
 
@@ -77,28 +77,33 @@ tuple<int,int,char> choose_movement(vector<vector<char>> map,int f,int s,vector<
 
 }
 int main(int argc, char* argv[]) {
-	
+
     bool verbose=true;
-	if (argc < 3) { 
+	if (argc < 3 && false) {
         //cout << "Usage is -in <infile> -out <outdir>\n"; // Inform the user of how to use the program
-        cin.get();
-        exit(0);
+        //cin.get();
+        //exit(0);
     } else { // if we got enough parameters...
         char* myFile, myPath, myOutPath;
-        for (int i = 0; i < argc; i++) { 
-        	if(i + 1 != argc){
-            	if (strcmp(argv[i], "-f")) {
-              		myFile = argv[i+2];
-              		//cout << "Using file: " << myFile << '\n';
-            	}
-            //std::cout << argv[i] << " ";
-            }
+        //for (int i = 0; i < argc; i++) {
+        //	if(i + 1 != argc){
+        //    	if (strcmp(argv[i], "-f")) {
+        //      		myFile = argv[i+2];
+        //      		//cout << "Using file: " << myFile << '\n';
+        //    	}
+        //    //std::cout << argv[i] << " ";
+        //    }
+        //
+        //}
+        string line;
+        while(getline(cin,line)){
+            myFile=line;
         }
 
         //... some more code
         ifstream infile(myFile);
         ifstream infile2(myFile);
-        string line;
+
         int length =0;
         while (getline(infile2, line))
         {
@@ -118,7 +123,7 @@ int main(int argc, char* argv[]) {
             aux2=0;
             for(char& c : line) {
               map[aux].push_back(c);
-              
+
               if(c=='@'){
                 f=aux;
                 s=aux2;
@@ -130,19 +135,19 @@ int main(int argc, char* argv[]) {
               aux2++;
 
             }
-            aux++;  
+            aux++;
         }
-        
+
         // for(vector<char>& v : map) //Print the map, testing purposes
         // {
         //     for(char& ve : v)
         //     {
         //         cout << ve;
-        //     } 
+        //     }
         //     cout << '\n';
         // }
         if(found1 && found2)
-        {   
+        {
             bool goal=false;
             string solution;
             vector<vector<int>> visited(length);
@@ -161,7 +166,7 @@ int main(int argc, char* argv[]) {
                 //         for(char& ve : v)
                 //         {
                 //             cout << ve;
-                //         } 
+                //         }
                 //         cout << '\n';
                 //     }
                 // }
@@ -186,7 +191,7 @@ int main(int argc, char* argv[]) {
                 solution+=get<2>(mov);
 
 
-                getchar();
+               // getchar();
 
 
             }
