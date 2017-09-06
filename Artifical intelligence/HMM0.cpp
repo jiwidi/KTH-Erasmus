@@ -12,16 +12,14 @@ class Matrix{
     int n, m;
 
 public:
-    Matrix(int n, int m){
+    Matrix(const int n, const int m){
         this->n = n;
         this->m = m;
-        vector<double> v;
-        matrix.push_back(v);
+        vector<double> v(m,0);
+        for (int i=0; i<n; i++){
+             matrix.push_back(v);
+        }
     }
-    
-    vector <vector<double> > getmatrix() const{
-        return matrix;
-    }    
 
     int getn() const{
         return n;   
@@ -29,40 +27,39 @@ public:
     
     int getm() const{
         return m;    
-    }    
+    }
+    
+    double getelement(const int i, const int j) const{
+        return matrix[i][j];
+    } 
 
-    void add (double a){
-        bool done = false;        
-        for(int i=0; (i < n) && (not done); i++){
-            if(matrix[i].size() < m){
-                matrix[i].push_back(a);
-                done = true;
-            }
-            else {
-                vector<double> v;
-                matrix.push_back(v);
-            }
-        }
-        if (not done){
-            cerr << "The matrix is already full, not possible to add elements";
-        }
+    vector<double> getvector (const int i) const{
+        return matrix[i];
+    } 
+
+    void addelement (const double a, const int i, const int j){
+        matrix[i][j] = a;
+    }
+    
+    void addvector (const vector<double>& v, const int i){
+        matrix[i] = v;
     }
 
-    void print(){
+    void print() const{
+        cout << n << " " << m;
         for(int i=0; i<n; i++){
             for(int j=0; j<m; j++){
-                cout << matrix[i][j] << " ";
+                cout << " " << matrix[i][j];
             }
-            cout << '\n';
         }
     }
 
-    Matrix transpose(){
+    Matrix transpose() const{
         Matrix trans=Matrix(getm(),getn());
         for(int i = 0; i < getn(); ++i)
             for(int j = 0; j < getm(); ++j)
             {
-                trans.add(matrix[j][i]);
+                trans.addelement(matrix[i][j],j,i);
             }
         return trans;
 
@@ -71,7 +68,7 @@ public:
     vector<double> operator*(const vector<double>& v){
         vector<double> resul(m,0);
         if(m != v.size()){
-            cerr << "The dimensions are not correct to multiply";
+            cerr << "Dimensions are not correct to multiply";
             return v;
         }
         else{
@@ -84,15 +81,12 @@ public:
         return resul;
     }
 
-    Matrix operator*(Matrix mat1) {
-        Matrix resul(this->n,mat1.getm());
+    Matrix operator*(const Matrix& mat1) {
+        Matrix resul(mat1.getm(),n);
         Matrix trans = mat1.transpose();
-        vector<double> v;
-        for(int i=0; i<m; i++){
-            v = *this *(trans.getmatrix())[i];
-            for(int j=0; j<mat1.getn(); j++){
-                resul.add(v[j]);
-            }
+        for(int i=0; i<mat1.getm(); i++){
+            vector<double> v = *this * (trans.getvector(i));
+            resul.addvector(v,i);
         }
         return resul.transpose();
     }
@@ -109,39 +103,39 @@ int main(){
 
     double element;
     
-    for(int i=0; i<(na*ma); i++){
-        cin >> element;
-        A.add(element);
+    for(int i=0; i<na; i++){
+        for (int j=0; j<ma; j++){
+            cin >> element;
+            A.addelement(element, i, j);
+        }
     }
-
-    A.print();
 
     int nb, mb;
     cin >> nb >> mb;
 
     Matrix B(nb,mb);
     
-    for(int i=0; i<(nb*mb); i++){
-        cin >> element;
-        B.add(element);
+    for(int i=0; i<nb; i++){
+        for (int j=0; j<mb; j++){
+            cin >> element;
+            B.addelement(element, i, j);
+        }
     }
-
-    B.print();
 
     int npi, mpi;
     cin >> npi >> mpi;
 
     Matrix pi(npi,mpi);
 
-    for(int i=0; i<(npi*mpi); i++){
-        cin >> element;
-        pi.add(element);
+    for(int i=0; i<npi; i++){
+        for (int j=0; j<mpi; j++){
+            cin >> element;
+            pi.addelement(element, i, j);
+        }
     }
 
-    pi.print();
-
-    Matrix m = A*B;
-    m.print();
+    Matrix resul = (pi*A)*B;
+    resul.print();
     
     return 0;
 }
