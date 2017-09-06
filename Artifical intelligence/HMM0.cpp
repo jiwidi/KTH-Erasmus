@@ -8,7 +8,7 @@
 using namespace std;
 
 class Matrix{
-    vector <vector<double>> matrix;
+    vector <vector<double> > matrix;
     int n, m;
 
 public:
@@ -19,11 +19,15 @@ public:
         matrix.push_back(v);
     }
     
-    int getn(){
+    vector <vector<double> > getmatrix() const{
+        return matrix;
+    }    
+
+    int getn() const{
         return n;   
     } 
     
-    int getm(){
+    int getm() const{
         return m;    
     }    
 
@@ -53,14 +57,45 @@ public:
         }
     }
 
-//    vector<double> operator*(const vector<double>& v){
+    Matrix transpose(){
+        Matrix trans=Matrix(getm(),getn());
+        for(int i = 0; i < getn(); ++i)
+            for(int j = 0; j < getm(); ++j)
+            {
+                trans.add(matrix[j][i]);
+            }
+        return trans;
 
-//    }
+    }
+    
+    vector<double> operator*(const vector<double>& v){
+        vector<double> resul(m,0);
+        if(m != v.size()){
+            cerr << "The dimensions are not correct to multiply";
+            return v;
+        }
+        else{
+            for (int i=0; i<n; i++){
+                for (int j=0; j<m; j++){
+                    resul[i] = resul[i] + matrix[i][j] * v[j];
+                }
+             }
+        }
+        return resul;
+    }
 
-//    Matrix operator*(const Matrix& mat1) {
-//        int n1= mat1.getn();
-//        int m1= mat1.getm();
-//    }
+    Matrix operator*(Matrix mat1) {
+        Matrix resul(this->n,mat1.getm());
+        Matrix trans = mat1.transpose();
+        vector<double> v;
+        for(int i=0; i<m; i++){
+            v = *this *(trans.getmatrix())[i];
+            for(int j=0; j<mat1.getn(); j++){
+                resul.add(v[j]);
+            }
+        }
+        return resul.transpose();
+    }
 
     
 };
@@ -104,6 +139,9 @@ int main(){
     }
 
     pi.print();
+
+    Matrix m = A*B;
+    m.print();
     
     return 0;
 }
