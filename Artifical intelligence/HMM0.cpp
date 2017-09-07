@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <vector>
-#include "Matrix.cpp"
+#include "atrix.cpp"
 
 using namespace std;
 

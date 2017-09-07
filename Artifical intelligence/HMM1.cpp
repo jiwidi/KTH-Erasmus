@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
     vector<double> resul(v1.size());
     for (int i=0; i<v1.size();i++){
@@ -12,6 +11,33 @@ vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
     }
     return resul;
 }
+
+double calcAlpha(Matrix A,Matrix B,vector<double> pi,vector<int> obs){
+	vector<double> alpha,alpham;
+   	Matrix Btrans=B.transpose();
+   	alpham=elementWise(pi,Btrans.getvector(obs[0]));
+	
+
+   	//Recursive alpha 
+   	for (int i=1; i< obs.size();i++){
+   		int currentObs=obs[i];
+
+   		alpham=A.transpose()*alpham;
+
+   		Matrix Btrans=B.transpose();
+		vector <double> bi=Btrans.getvector(currentObs);
+		alpha=elementWise(alpham,bi);
+   	   	alpham=alpha;
+	}
+	double sum=0;
+   	for(auto it= alpha.begin(); it!=alpha.end();it++){
+   		sum+=*it;
+   	}
+   	return sum;
+}
+
+
+
 
 
 int main(){
@@ -62,27 +88,8 @@ int main(){
    		obs[i]=cobs;
 
    	}
-   	//Iteration i=1
-   	vector<double> alpha,alpham;
-   	Matrix Btrans=B.transpose();
-   	alpham=elementWise(pi,Btrans.getvector(obs[0]));
-	
-
    	//Recursive alpha 
-   	for (int i=1; i< nobs;i++){
-   		int currentObs=obs[i];
-
-   		alpham=A.transpose()*alpham;
-
-   		Matrix Btrans=B.transpose();
-		vector <double> bi=Btrans.getvector(currentObs);
-		alpha=elementWise(alpham,bi);
-   	   	alpham=alpha;
-	}
-   	double sum=0;
-   	for(auto it= alpha.begin(); it!=alpha.end();it++){
-   		sum+=*it;
-   	}
+   	double sum=calcAlpha(A,B,pi,obs);
    	cout << sum;
 
 
