@@ -96,10 +96,3 @@ public:
 
 };
 
-vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
-    vector<double> resul(v1.size());
-    for (int i=0; i<v1.size();i++){
-        resul[i]=v1[i]*v2[i];
-    }
-    return resul;
-}
