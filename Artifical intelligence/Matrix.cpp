@@ -4,6 +4,9 @@
 
 using namespace std;
 
+
+
+
 class Matrix{
     vector <vector<double> > matrix;
     int n, m;
@@ -62,6 +65,8 @@ public:
 
     }
 
+
+
     vector<double> operator*(const vector<double>& v){
         vector<double> resul(m,0);
         if(m != v.size()){
@@ -90,3 +95,11 @@ public:
 
 
 };
+
+vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
+    vector<double> resul(v1.size());
+    for (int i=0; i<v1.size();i++){
+        resul[i]=v1[i]*v2[i];
+    }
+    return resul;
+}
