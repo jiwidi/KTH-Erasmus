@@ -18,6 +18,13 @@ public:
              matrix.push_back(v);
         }
     }
+    
+    ~Matrix(){
+        for (int i=0; i<n; i++){
+            matrix[i].clear();
+        }    
+        matrix.clear();
+    }
 
     int getn() const{
         return n;

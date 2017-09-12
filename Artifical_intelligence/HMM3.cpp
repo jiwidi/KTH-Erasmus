@@ -17,25 +17,20 @@ vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
 
 tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int it){
     
-    vector<double> alpha, alpham;
     Matrix Btrans=B.transpose();
     int N = Btrans.getm();
-    vector<double> c(it,0);
-    if (it==0){
-        c.push_back(0);    
-    }
+
+    vector<double> alpha(N), alpham(N);
+    vector<double> c(it,0); 
     
    
     //Compute alpha0(i)
     alpha=elementWise(pi,Btrans.getvector(obs[0]));
 
-    cout << "hola"<< endl;
-    cout << "itera" << it << endl;
     for(int i=0; i<N; i++){
         c[0]=c[0]+alpha[i];
     }
     
-    cout << "adios"<< endl;
     //Scale alpha0(i)
     c[0]=1/c[0];
     
@@ -47,6 +42,7 @@ tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B,
 
     for(int t=1; t<it; t++){
         alpham=alpha;
+        c[t]=0;
         int currentObs=obs[t];
         for(int i=0; i<N; i++){
             alpha[i]=0;
@@ -63,7 +59,6 @@ tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B,
         for(int i=0; i<N; i++){
             alpha[i]=c[t]*alpha[i];
         }
-
     }
 
     tuple<vector<double>,vector<double>> result (alpha,c);
@@ -74,16 +69,18 @@ tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B,
 
 
 vector<double> betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
-    vector<double> beta(it), betaM;
+    
     Matrix Btrans=B.transpose();
-    int N = Btrans.getm();    
+    int N = Btrans.getm();   
+
+    vector<double> beta(N), betaM(N); 
     
     //Scale betat-1(i)
     for(int i=0; i<N; i++){
         beta[i]=c[it-1];
     }
 
-    //Compute betat(i-1)
+    //Compute betat(i)
     for(int t=it-2; t>=0; t--){
         betaM=beta;
         int lastObs=obs[t+1];
@@ -102,7 +99,7 @@ vector<double> betapass (const Matrix& A, const Matrix& B, const vector<int>& ob
 }
 
 
-tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int it){
+tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int it, const vector<double>& c){
     
     Matrix Btrans=B.transpose();
     int N = Btrans.getm();
@@ -110,39 +107,30 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
     Matrix aux(N,N);
     vector<Matrix> digamma(it,aux);    // digamma is a vector of matrix to save it for all t
     Matrix gamma(it,N); //gamma is a matrix because we need to save it for all t
-
+    
     double denom;
     for(int t=0; t<it-1; t++){
         denom=0;
-        cout << "peta " << t << endl;
         int nextObs=obs[t+1];
-        cout << "maaal" << endl;
-        vector<double> alphat = get<0> (alphapass(A,B,pi,obs,t));
-        cout << "biiieeeen" << endl;
-        vector<double> c = get<1> (alphapass(A,B,pi,obs,t+1));
-        vector<double> betat1 = betapass(A,B,obs,t+1,c);
+        vector<double> alphat = get<0> (alphapass(A,B,pi,obs,t+1));
+        vector<double> betat1 = betapass(A,B,obs,t+2,c);
         vector<double> bo=Btrans.getvector(nextObs);
         for(int i=0; i<N; i++){
             for (int j=0; j<N; j++){
                  denom = denom + alphat[i] * A.getelement(i,j) * bo[j] + betat1[j];
             }
         }
-        cout << "problema" << endl;
-        cout << "T" << t << "dimensions" << gamma.getn() << gamma.getm() << endl;
         for(int i=0; i<N; i++){
             gamma.addelement(0,t,i);
             for(int j=0; j<N; j++){
-                cout << "hola" << i << j << endl;
                 digamma[t].addelement((alphat[i] * A.getelement(i,j) * bo[j] + betat1[j]) / denom,i,j);
                 gamma.addelement(gamma.getelement(t,i) + digamma[t].getelement(i,j),t,i);
             }
-            cout << "ey" << endl;
-        }
-        cout << "jaime" <<endl;
+        }   
     }
 
+
     //Special case for gammat-1(i)
-    cout << "encontrado" << endl;
     denom = 0;
     vector<double> alphatmin1= get<0>(alphapass(A,B,pi,obs,it-1));
     for (int i=0; i<N; i++){
@@ -184,7 +172,7 @@ tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, 
 
     // reestimate B
     for(int i=0; i<N; i++){
-        for(int j=0; i<M; j++){
+        for(int j=0; j<M; j++){
             double numer=0;
             double denom=0;
             for(int t=0; t<it; t++){
@@ -192,9 +180,10 @@ tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, 
                     numer = numer + gamma.getelement(t,i);                
                 }
                 denom = denom + gamma.getelement(t,i);            
-            }
+            } 
             B.addelement(numer/denom, i, j);
-        }    
+        }
+          
     }
     
     tuple<Matrix,Matrix,vector<double>> result(A,B,pi);
@@ -257,11 +246,26 @@ int main(){
     int N = B.getn(); //number of states
     int M = B.getm(); //number of observations
 
-    for (int i = 0; i<maxIters && logProb > oldLogProb; i++){
+    vector<double> c = get<1>(alphapass(A,B,pi,obs,nobs));
+
+    tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs,c);
+    tuple<Matrix,Matrix,vector<double>> estimated = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
+
+    A=get<0>(estimated);
+    B=get<1>(estimated);
+    pi=get<2>(estimated);
+    //compute log[P(O|lambda)]
+    for(int i=0; i<nobs; i++){
+        logProb = logProb + log(c[i]);
+    }
+    logProb = -logProb;
+
+
+    for (int i = 0; i < maxIters && logProb > oldLogProb; i++){
+
+        oldLogProb = logProb;
         vector<double> c = get<1>(alphapass(A,B,pi,obs,nobs));
-        cout << "ey,primerpasito" << endl;
-        tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs);
-        cout << "todoguaygenial" << endl;
+        tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs,c);
         tuple<Matrix,Matrix,vector<double>> estimated = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
 
         A=get<0>(estimated);
@@ -274,6 +278,12 @@ int main(){
             logProb = logProb + log(c[i]);
         }
         logProb = -logProb;
+
+        cout << "iteracion" << i << endl;
+        cout << logProb;
+        cout << oldLogProb;
+        cout << endl;
+
     }
 
     //output A, B
