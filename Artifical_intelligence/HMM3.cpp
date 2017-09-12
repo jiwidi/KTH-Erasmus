@@ -20,7 +20,7 @@ tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B,
     Matrix Btrans=B.transpose();
     int N = Btrans.getm();
 
-    vector<double> alpha(N), alpham(N);
+    vector<double> alpha(N), alpham(N); //just need to keep the actual alphat and alphat-1
     vector<double> c(it,0); 
     
    
@@ -43,13 +43,12 @@ tuple<vector<double>,vector<double>> alphapass(const Matrix& A, const Matrix& B,
     for(int t=1; t<it; t++){
         alpham=alpha;
         c[t]=0;
-        int currentObs=obs[t];
         for(int i=0; i<N; i++){
             alpha[i]=0;
             for(int j=0; j<N; j++){
                 alpha[i]=alpha[i]+alpham[j]*A.getelement(j,i);
             }
-            vector <double> bo=Btrans.getvector(currentObs);
+            vector <double> bo=Btrans.getvector(obs[t]);
             alpha[i]=alpha[i]*bo[i];
             c[t]=c[t]+alpha[i];
         }
@@ -83,12 +82,11 @@ vector<double> betapass (const Matrix& A, const Matrix& B, const vector<int>& ob
     //Compute betat(i)
     for(int t=it-2; t>=0; t--){
         betaM=beta;
-        int lastObs=obs[t+1];
-        vector <double> bo=Btrans.getvector(lastObs);
+        vector <double> bo=Btrans.getvector(obs[t+1]);
         for(int i=0; i<N; i++){
             beta[i]=0;
             for(int j=0; j<N; j++){
-                beta[i]=beta[i]+A.getelement(i,j)*bo[i]*betaM[j];
+                beta[i]=beta[i]+A.getelement(i,j)*bo[j]*betaM[j];
             }
             beta[i]=c[t]*beta[i];
         }
@@ -111,10 +109,9 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
     double denom;
     for(int t=0; t<it-1; t++){
         denom=0;
-        int nextObs=obs[t+1];
         vector<double> alphat = get<0> (alphapass(A,B,pi,obs,t+1));
         vector<double> betat1 = betapass(A,B,obs,t+2,c);
-        vector<double> bo=Btrans.getvector(nextObs);
+        vector<double> bo=Btrans.getvector(obs[t+1]);
         for(int i=0; i<N; i++){
             for (int j=0; j<N; j++){
                  denom = denom + alphat[i] * A.getelement(i,j) * bo[j] + betat1[j];
@@ -124,7 +121,8 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
             gamma.addelement(0,t,i);
             for(int j=0; j<N; j++){
                 digamma[t].addelement((alphat[i] * A.getelement(i,j) * bo[j] + betat1[j]) / denom,i,j);
-                gamma.addelement(gamma.getelement(t,i) + digamma[t].getelement(i,j),t,i);
+                double auxil = gamma.getelement(t,i);
+                gamma.addelement(auxil + (digamma[t].getelement(i,j)),t,i);
             }
         }   
     }
@@ -132,7 +130,7 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
 
     //Special case for gammat-1(i)
     denom = 0;
-    vector<double> alphatmin1= get<0>(alphapass(A,B,pi,obs,it-1));
+    vector<double> alphatmin1= get<0>(alphapass(A,B,pi,obs,it));
     for (int i=0; i<N; i++){
         denom = denom + alphatmin1[i];
     }
@@ -249,11 +247,12 @@ int main(){
     vector<double> c = get<1>(alphapass(A,B,pi,obs,nobs));
 
     tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs,c);
-    tuple<Matrix,Matrix,vector<double>> estimated = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
+    tuple<Matrix,Matrix,vector<double>> estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
 
-    A=get<0>(estimated);
-    B=get<1>(estimated);
-    pi=get<2>(estimated);
+    A=get<0>(estimation);
+    B=get<1>(estimation);
+    pi=get<2>(estimation);
+
     //compute log[P(O|lambda)]
     for(int i=0; i<nobs; i++){
         logProb = logProb + log(c[i]);
@@ -266,11 +265,11 @@ int main(){
         oldLogProb = logProb;
         vector<double> c = get<1>(alphapass(A,B,pi,obs,nobs));
         tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs,c);
-        tuple<Matrix,Matrix,vector<double>> estimated = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
+        tuple<Matrix,Matrix,vector<double>> newestimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
 
-        A=get<0>(estimated);
-        B=get<1>(estimated);
-        pi=get<2>(estimated);
+        A=get<0>(newestimation);
+        B=get<1>(newestimation);
+        pi=get<2>(newestimation);
     
         //compute log[P(O|lambda)]
         logProb = 0;
@@ -279,7 +278,7 @@ int main(){
         }
         logProb = -logProb;
 
-        cout << "iteracion" << i << endl;
+        cout << "iteration" << i << endl;
         cout << logProb;
         cout << oldLogProb;
         cout << endl;
@@ -291,7 +290,7 @@ int main(){
     cout << N << " " << N;
     for(int i=0; i<N; i++){
         for (int j=0; j<N; j++){
-            cout << " " << A.getelement(i,j) << endl;
+            cout << " " << A.getelement(i,j);
         }    
     }
     cout << endl;
@@ -299,7 +298,7 @@ int main(){
     cout << N << " " << M;
     for(int i=0; i<N; i++){
         for (int j=0; j<M; j++){
-            cout << " " << B.getelement(i,j) << endl;
+            cout << " " << B.getelement(i,j);
         }    
     }
     cout << endl;
