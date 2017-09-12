@@ -5,8 +5,6 @@
 using namespace std;
 
 
-
-
 class Matrix{
     vector <vector<double> > matrix;
     int n, m;

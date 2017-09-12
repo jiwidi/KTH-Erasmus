@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include "Matrix.cpp"
 
 using namespace std;
@@ -37,6 +38,14 @@ double calcAlpha(Matrix A,Matrix B,vector<double> pi,vector<int> obs){
 }
 
 
+double sumAlpha(Matrix A,Matrix B,vector<double> pi,vector<int> obs,int it){
+  vector <double> alpha=alphapass(A,B,pi,obs,it);
+  double sum=0;
+  for(auto it= alpha.begin(); it!=alpha.end();it++){
+      sum+=*it;
+  }
+  return sum;
+}
 
 
 
@@ -88,9 +97,8 @@ int main(){
    		obs[i]=cobs;
 
    	}
-   	//Recursive alpha 
-   	double sum=calcAlpha(A,B,pi,obs);
-   	cout << sum;
 
+   	double sum=sumAlpha(A,B,pi,obs,obs.size());
+   	cout << sum;
 
 }
