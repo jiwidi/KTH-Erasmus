@@ -57,6 +57,7 @@ public:
                 cout << " " << matrix[i][j];
             }
         }
+        cout << endl;
     }
 
     Matrix transpose() const{
