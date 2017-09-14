@@ -10,12 +10,30 @@ class Matrix{
     int n, m;
 
 public:
-    Matrix(const int n, const int m){
+    Matrix(const int n, const int m, bool identity){
         this->n = n;
         this->m = m;
-        vector<double> v(m,0);
+        if(!identity){
+            vector<double> v(m,0);
+            for (int i=0; i<n; i++){
+                 matrix.push_back(v);
+            }
+        }
+        else {
+            
+        
+        }
+    }
+    
+    Matrix(const int n, const int m, const double x){
+        this->n = n;
+        this->m = m;
+        vector<double> v(m,x);
         for (int i=0; i<n; i++){
              matrix.push_back(v);
+             for(int j=0; j<m; j++){
+                matrix[i].push_back(x);
+             }
         }
     }
     
@@ -71,7 +89,17 @@ public:
 
     }
 
-
+    void normalize() {
+        for(int i=0; i<n; i++){
+            double sum = 0;
+            for(int j=0; j<m; j++){
+                sum = sum + matrix[i][j];
+            }
+            for(int j=0; j<m; j++){
+                matrix[i][j] *= 1/sum;            
+            }
+        }
+    }
 
     vector<double> operator*(const vector<double>& v){
         vector<double> resul(m,0);
