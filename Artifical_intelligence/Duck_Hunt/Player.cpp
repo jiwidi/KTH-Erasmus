@@ -9,12 +9,32 @@ Player::Player()
 {
 }
 
+const int S = 10;   //number of states of the HMM (number of possible movements of the birds)
+const int O = 10;   //number of observations of the HMM (number of possible movements of the birds)
+
+
 Action Player::shoot(const GameState &pState, const Deadline &pDue)
 {
     /*
      * Here you should write your clever algorithms to get the best action.
      * This skeleton never shoots.
      */
+
+    // Main information about the environment
+    int round = pState.getRound();
+    size_t numberBirds = pState.getNumBirds();
+
+    Matrix auxA(S,S);  
+    vector<Matrix> A(numberBirds,auxA);
+
+    Matrix auxB(S,O);
+    vector<Matrix> B(numberBirds,auxB);
+
+    vector<double> auxpi(S);
+    vector<vector<double>> pi(numberBirds);
+
+    //Initialize the matrixes (random values)
+
 
     // This line choose not to shoot
     return cDontShoot;
