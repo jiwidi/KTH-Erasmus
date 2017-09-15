@@ -10,18 +10,12 @@ class Matrix{
     int n, m;
 
 public:
-    Matrix(const int n, const int m, bool identity){
+    Matrix(const int n, const int m){
         this->n = n;
         this->m = m;
-        if(!identity){
-            vector<double> v(m,0);
-            for (int i=0; i<n; i++){
-                 matrix.push_back(v);
-            }
-        }
-        else {
-            
-        
+        vector<double> v(m,0);
+        for (int i=0; i<n; i++){
+            matrix.push_back(v);
         }
     }
     
@@ -76,6 +70,16 @@ public:
             }
         }
         cout << endl;
+    }
+
+    void identity() {
+        matrix.clear();
+        
+        for (int i=0; i<n; i++){
+            vector<double> v(m,0);
+            v[i]=1;
+            matrix.push_back(v);
+        }
     }
 
     Matrix transpose() const{
