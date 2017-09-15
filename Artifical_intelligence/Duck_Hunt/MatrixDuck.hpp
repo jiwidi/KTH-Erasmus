@@ -34,6 +34,8 @@ public:
     Matrix transpose() const;
 
     void normalize();
+    
+    void shuffle();
 
     vector<double> operator*(const vector<double>& v);
 

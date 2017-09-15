@@ -12,21 +12,36 @@ Player::Player()
 {
 }
 
-const int S = 9;   //number of states of each HMM (number of possible movements of the birds)
-const int O = 9;   //number of observations of each HMM (number of possible movements of the birds)
+const int Ss = 9;   //number of states of each HMM (number of possible movements of the birds)
+const int Os = 9;   //number of observations of each HMM (number of possible movements of the birds)
+
 const double epsilon = 0.0001;
 const int maxNumBirds = 20;
 
 const double probToShoot = 1/(double)9;
 
-Matrix auxA(S,S,epsilon);  
+Matrix auxA(Ss,Ss,epsilon);  
 std::vector<Matrix> A(maxNumBirds,auxA);
 
-Matrix auxB(S,O);
+Matrix auxB(Ss,Os);
 std::vector<Matrix> B(maxNumBirds,auxB);
 
-std::vector<double> auxpi(S);
+std::vector<double> auxpi(Ss);
 std::vector<std::vector<double>> pi(maxNumBirds);
+
+// GUESSING
+const int Sg = 9;
+const int Og = 6;
+
+Matrix auxAg(Sg,Sg,epsilon);  
+std::vector<Matrix> Ag(maxNumBirds,auxA);
+
+Matrix auxBg(Sg,Og,epsilon);
+std::vector<Matrix> Bg(maxNumBirds,auxB);
+
+std::vector<double> auxpig(Sg,epsilon);
+std::vector<std::vector<double>> pig(maxNumBirds);
+
 
 
 int getIndex(EMovement mov){
@@ -119,18 +134,23 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
     // Then we initialize the matrixes with the information we have
     else if (timestep == 90 && round == 0){
 
-        // As the observations correspond to the states, we initialize B with the identity matrix
+
+        //initialize B with random values
         for (int i=0; i<numberBirds; i++){
-            B[i].identity();
-            for (int j=0; j<B[i].getn();j++){
-                for (int k=0; k<B[i].getm();k++){
-                    if(B[i].getelement(j,k)==0){
-                        B[i].addelement(epsilon,j,k);                    
-                    }                
-                }            
-            }
-            B[i].normalize();
+            B[i].shuffle();
         }
+        // As the observations correspond to the states, we initialize B with the identity matrix
+//        for (int i=0; i<numberBirds; i++){
+//            B[i].identity();
+//            for (int j=0; j<B[i].getn();j++){
+//                for (int k=0; k<B[i].getm();k++){
+//                    if(B[i].getelement(j,k)==0){
+//                        B[i].addelement(epsilon,j,k);                    
+//                    }                
+//                }            
+//            }
+//            B[i].normalize();
+//        }
 
         // We initialize pi with random values
         for (int i=0; i<numberBirds; i++){
@@ -139,10 +159,10 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
             double fMax = average+ep;
             double fMin = average-ep;
             double sum=1;
-            for (int j=0;j<S-1;j++){
+            for (int j=0;j<Ss-1;j++){
                 double f = (double)rand() / RAND_MAX;
                 double v= fMin + f * (fMax - fMin);
-                sum= sum-v;
+                sum-=v;
                 pi[i].push_back(v);
             }
             pi[i].push_back(sum);
@@ -293,7 +313,21 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
      * This skeleton makes no guesses, better safe than sorry!
      */
 
-    std::vector<ESpecies> lGuesses(pState.getNumBirds(), SPECIES_UNKNOWN);
+    int round = pState.getRound();
+    size_t numberBirds = pState.getNumBirds();
+
+    std::vector<ESpecies> lGuesses(nummberBirds, SPECIES_UNKNOWN);
+
+    int timestep=(pState.getBird(0)).getSeqLength();
+
+    if (round == 0){
+        // try to guess all the birds completely randomly    
+    }
+    else {
+        
+
+    }
+    
     return lGuesses;
 }
 
@@ -310,6 +344,16 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
     /*
      * If you made any guesses, you will find out the true species of those birds in this function.
      */
+    if (pState.getRound() == 0){
+        //initialize the matrixes A,B,pi with the information from the first round (pSpecies and movements)
+        
+        // A
+    
+        // B
+
+        // pi
+    }
+    
 }
 
 

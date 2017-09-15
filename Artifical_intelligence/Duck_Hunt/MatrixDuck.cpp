@@ -103,6 +103,25 @@ using namespace std;
         }
     }
 
+    void Matrix::shuffle() {
+        matrix.clear();
+
+        for(int i=0; i<n;i++){
+            vector <double> v(m, (1/(double) m) );;
+            double sum=1;
+            for(int j=0;j<m-1;j++){
+                double r1=((double) rand() / (RAND_MAX));
+                double r2=((double) rand() / (RAND_MAX));
+                double ep=0.05*(1/(double) m); 
+                v[j]+=r1*ep-(r2*ep);
+                sum=sum-v[j];
+
+            }
+            v[m-1]=sum;
+            matrix.push_back(v);
+        }
+    }
+
     vector<double> Matrix::operator*(const vector<double>& v){
         vector<double> resul(m,0);
         if(m != v.size()){
