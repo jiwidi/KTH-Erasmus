@@ -1,6 +1,7 @@
 #include "Player.hpp"
 #include <cstdlib>
 #include <iostream>
+#include "HMM3Duck.cpp"
 
 namespace ducks
 {
