@@ -11,6 +11,7 @@ Player::Player()
 
 const int S = 10;   //number of states of the HMM (number of possible movements of the birds)
 const int O = 10;   //number of observations of the HMM (number of possible movements of the birds)
+const double epsilon = 0.0001;
 
 
 Action Player::shoot(const GameState &pState, const Deadline &pDue)
@@ -24,16 +25,38 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
     int round = pState.getRound();
     size_t numberBirds = pState.getNumBirds();
 
-    Matrix auxA(S,S);  
-    vector<Matrix> A(numberBirds,auxA);
+    Matrix auxA(S,S,epsilon);  
+    std::vector<Matrix> A(numberBirds,auxA);
 
     Matrix auxB(S,O);
-    vector<Matrix> B(numberBirds,auxB);
+    std::vector<Matrix> B(numberBirds,auxB);
 
-    vector<double> auxpi(S);
-    vector<vector<double>> pi(numberBirds);
+    std::vector<double> auxpi(S);
+    std::vector<std::vector<double>> pi(numberBirds);
+    
+    std::vector<std::vector<EMovement>> obs(numberBirds);
 
     //Initialize the matrixes (random values)
+
+    for(int i=0; i<numberBirds; i++){
+        Bird crB=pState.getBird(i);
+        int nobs=crB.getSeqLength();
+        
+        for (int k=0;k<nobs;k++){
+            obs[i].push_back(crb.getObservation(k));    
+        }
+        int lastObs = getIndex(obs[i][0]); //TODO: create getIndex
+        int currentObs;
+        for (int k=1;k<nobs;k++){
+             currentObs = getIndex(obs[i][k]);
+             if(lastObs != -1){
+                A[i].addelement(A[i].getelement(lastObs,currentObs)+1,lastObs,currentObs);
+             }
+        }
+        A[i].normalize();
+        
+        
+    }
 
 
     // This line choose not to shoot
