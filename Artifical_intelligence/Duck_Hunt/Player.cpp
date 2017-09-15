@@ -121,6 +121,17 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
         }
 
         // We initialize pi with random values
+        vector<double> pi(9);
+        double ep=0.005
+        sum=1;
+        for (int i=0;i<9-1;i++){
+            double r1=((double) rand() / (RAND_MAX));
+            double r2=((double) rand() / (RAND_MAX));
+            double v=1/9+r1*ep-(r2*ep);
+            sum= sum-v;
+            pi.push_back(v);
+        }
+        pi.push_back(sum);
         
                 
        
