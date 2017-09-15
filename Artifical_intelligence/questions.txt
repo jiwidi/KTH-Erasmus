@@ -1,0 +1,53 @@
+GRADES E-D
+
+1. The initial probability vector pi, the transition probability matrix A and the observation probability matrix B for the problem of the coins are the following:
+pi = (0.5, 0.5)
+
+A = ( 0.5 0.5
+      0.5 0.5 )
+
+B = ( 0.9 0.1
+      0.5 0.5 )
+
+2. The result of that operation will be the probability of being in a certain state in the next time step.
+In this case, it will be (0.5, 0.5)
+
+3. The result of that operation will be the probability of seing a certain observation in the next time step.
+In this case, it will be (0.7, 0.3)
+
+4. 
+
+
+5. 
+
+
+6.
+alpha: probability of being in state i in t and have observed the whole sequence 1:t * probability of move to state j in t+1 * probability of being in state j having observed the observation t+1* probability of generate the observations t+2:T given you are in state j in t+1
+
+GRADE C
+
+7. Results with 1000 observations and 100 max iterations
+3 3 0.711058 0.0147916 0.273939 0.105538 0.784927 0.108855 0.173948 0.303336 0.520327
+3 4 0.675389 0.20932 0.0855399 0.0297508 0.0694013 0.429758 0.282484 0.218357 0.000577594 0.0219915 0.341105 0.636326
+
+Results with 10000 observations and 100 max iterations
+3 3 0.697461 0.0553397 0.247198 0.129273 0.720998 0.14966 0.139213 0.257066 0.603495
+3 4 0.704234 0.183713 0.102413 0.00964052 0.0885525 0.43175 0.31978 0.159917 0.0480118 0.171082 0.184269 0.596637
+
+Results with 1000 observations and 500 max iterations (it stops in 320, so converge)
+3 3 0.706054 0.0138047 0.279979 0.10478 0.823158 0.0713954 0.180961 0.30796 0.508388
+3 4 0.681696 0.219266 0.0783173 0.0207212 0.0685803 0.40239 0.280977 0.248053 1.14263e-09 0.000595377 0.355972 0.643432
+1 2.74108e-320 0 
+
+Results with 10000 observations and 500 max iterations
+3 3 0.696135 0.0482148 0.25565 0.11832 0.74958 0.132027 0.153296 0.261399 0.585073
+3 4 0.708343 0.186178 0.103656 0.00182253 0.0986977 0.418922 0.31095 0.17143 0.0309479 0.168374 0.185295 0.615382
+0 1 2.41532e-124 
+
+
+
+
+
+
+
+
