@@ -11,7 +11,7 @@ using namespace std;
 
 vector <double> elWise(const vector<double>& v1,const vector<double>& v2);
 
-vector <double> calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs);
+double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int nobs);
 
 // ------------------------- HMM3 -----------------------
 
@@ -27,4 +27,4 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
 tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, const Matrix& gamma, const vector<int>& obs, const int it, const int N, const int M);
 
 
-tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs);
+tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& Ain, const Matrix& Bin, const vector<double>& piin, const vector<int>& obs, const int nobs);

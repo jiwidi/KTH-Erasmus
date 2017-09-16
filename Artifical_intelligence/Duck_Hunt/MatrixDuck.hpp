@@ -1,8 +1,12 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
 
+#ifndef mymatrix_H
+#define mymatrix_H
+
+
+using namespace std;
 
 class Matrix{
     vector <vector<double> > matrix;
@@ -43,4 +47,4 @@ public:
 
 };
 
-
+#endif

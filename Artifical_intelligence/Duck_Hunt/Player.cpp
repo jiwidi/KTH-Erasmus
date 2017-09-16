@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 #include "HMMDuck.hpp"
 
 namespace ducks
@@ -18,62 +19,55 @@ const int Os = 9;   //number of observations of each HMM (number of possible mov
 const double epsilon = 0.0001;
 const int maxNumBirds = 20;
 
+
 const double probToShoot = 1/(double)9;
 
-Matrix auxA(Ss,Ss,epsilon);  
-std::vector<Matrix> A(maxNumBirds,auxA);
+Matrix auxAs(Ss,Ss,epsilon);  
+std::vector<Matrix> As(maxNumBirds,auxAs);
 
-Matrix auxB(Ss,Os);
-std::vector<Matrix> B(maxNumBirds,auxB);
+Matrix auxBs(Ss,Os);
+std::vector<Matrix> Bs(maxNumBirds,auxBs);
 
-std::vector<double> auxpi(Ss);
-std::vector<std::vector<double>> pi(maxNumBirds);
+std::vector<std::vector<double>> pis(maxNumBirds);
 
 // GUESSING
-const int Sg = 9;
-const int Og = 6;
+const int Sg = 5;
+const int Og = 9;
+const int numSpecies = 6;
 
 Matrix auxAg(Sg,Sg,epsilon);  
-std::vector<Matrix> Ag(maxNumBirds,auxA);
+std::vector<Matrix> Ag(numSpecies,auxAg);
 
 Matrix auxBg(Sg,Og,epsilon);
-std::vector<Matrix> Bg(maxNumBirds,auxB);
+std::vector<Matrix> Bg(numSpecies,auxBg);
 
-std::vector<double> auxpig(Sg,epsilon);
-std::vector<std::vector<double>> pig(maxNumBirds);
+std::vector<std::vector<double>> pig(numSpecies);
+
+const double minConfidence=0.035;
 
 
 
-int getIndex(EMovement mov){
-    if( mov == MOVE_UP_LEFT) {
-        return 0;    
+ESpecies getSpecie(int ind){
+    if(ind == 0) {
+        return SPECIES_PIGEON;    
     }
-    else if ( mov == MOVE_UP) {
-        return 1;    
+    else if (ind == 1) {
+        return SPECIES_RAVEN;    
     }
-    else if (mov == MOVE_UP_RIGHT) {
-        return 2;
+    else if (ind == 2) {
+        return SPECIES_SKYLARK;
     }
-    else if (mov == MOVE_LEFT) {
-        return 3;
+    else if (ind == 3) {
+        return SPECIES_SWALLOW;
     }
-    else if (mov == MOVE_STOPPED) {
-        return 4;
+    else if (ind == 4) {
+        return SPECIES_SNIPE;
     }
-    else if (mov == MOVE_RIGHT) {
-        return 5;
-    }
-    else if (mov == MOVE_DOWN_LEFT) {
-        return 6;
-    }
-    else if (mov == MOVE_DOWN) {
-        return 7;
-    }
-    else if (mov == MOVE_DOWN_RIGHT){
-        return 8;
+    else if (ind == 5) {
+        return SPECIES_BLACK_STORK;
     }
     else {
-        return -1;
+        return SPECIES_UNKNOWN;
     }
 }
 
@@ -119,108 +113,122 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
      * This skeleton never shoots.
      */
 
-    // Main information about the environment
-    int round = pState.getRound();
-    size_t numberBirds = pState.getNumBirds();
+//    // Main information about the environment
+//    int round = pState.getRound();
+//    size_t numberBirds = pState.getNumBirds();
 
-    int timestep=(pState.getBird(0)).getSeqLength();
+//    int timestep=(pState.getBird(0)).getSeqLength();
 
-    // First, we just wait without shooting until having some information about the birds
+//    // First, we just wait without shooting until having some information about the birds
 
-    if (timestep < 90 && round == 0){
-        return cDontShoot;
-    }
-    
-    // Then we initialize the matrixes with the information we have
-    else if (timestep == 90 && round == 0){
+//    if (timestep < 90 && round == 0){
+//        return cDontShoot;
+//    }
+//    
+//    // Then we initialize the matrixes with the information we have
+//    else if (timestep == 90 && round == 0){
 
 
-        //initialize B with random values
-        for (int i=0; i<numberBirds; i++){
-            B[i].shuffle();
-        }
-        // As the observations correspond to the states, we initialize B with the identity matrix
+//        //initialize B with random values
 //        for (int i=0; i<numberBirds; i++){
-//            B[i].identity();
-//            for (int j=0; j<B[i].getn();j++){
-//                for (int k=0; k<B[i].getm();k++){
-//                    if(B[i].getelement(j,k)==0){
-//                        B[i].addelement(epsilon,j,k);                    
-//                    }                
-//                }            
+//            B[i].shuffle();
+//        }
+//        // As the observations correspond to the states, we initialize B with the identity matrix
+////        for (int i=0; i<numberBirds; i++){
+////            B[i].identity();
+////            for (int j=0; j<B[i].getn();j++){
+////                for (int k=0; k<B[i].getm();k++){
+////                    if(B[i].getelement(j,k)==0){
+////                        B[i].addelement(epsilon,j,k);                    
+////                    }                
+////                }            
+////            }
+////            B[i].normalize();
+////        }
+
+//        // We initialize pi with random values
+//        for (int i=0; i<numberBirds; i++){
+//            double ep=0.005;
+//            double average = 1/(double)Ss;
+//            double fMax = average+ep;
+//            double fMin = average-ep;
+//            double sum=1;
+//            for (int j=0;j<Ss-1;j++){
+//                double f = (double)rand() / RAND_MAX;
+//                double v= fMin + f * (fMax - fMin);
+//                sum-=v;
+//                pi[i].push_back(v);
 //            }
-//            B[i].normalize();
+//            pi[i].push_back(sum);
+//        }
+//        
+//        std::vector<std::vector<EMovement>> obs(numberBirds);
+
+//        // We initialize A after 90 observations to try to have a better estimation of probabilities        
+//        for(int i=0; i<numberBirds; i++){
+//            Bird crB=pState.getBird(i);
+//            int nobs=crB.getSeqLength();
+//            
+//            for (int k=0;k<nobs;k++){
+//                obs[i].push_back(crB.getObservation(k));    
+//            }
+
+////            cerr << "observations vector of bird: " << i << endl;            
+////            for (int k=0;k<nobs;k++){
+////                cerr << obs[i][k] << " ";    
+////            }
+//            cerr << endl;
+//            int lastObs = getIndex(obs[i][0]);
+//            int currentObs;
+//            for (int k=1;k<nobs;k++){
+//                 currentObs = getIndex(obs[i][k]);
+//                 if(lastObs != -1){
+//                    A[i].addelement(A[i].getelement(lastObs,currentObs)+1,lastObs,currentObs);
+//                 }
+//                 lastObs=currentObs;
+//            }
+//            A[i].normalize(); 
+//            cerr <<"A matrix: " << A[i].print() << endl;
+//            cerr << "B matrix: " << B[i].print() << endl;
+//            cerr << "Pi vector: ";
+//            for(int k=0;k<pi[i].size();k++){
+//                cerr << pi[i][k] << " ";
+//            }
+//            cerr << endl;
 //        }
 
-        // We initialize pi with random values
-        for (int i=0; i<numberBirds; i++){
-            double ep=0.005;
-            double average = 1/(double)S;
-            double fMax = average+ep;
-            double fMin = average-ep;
-            double sum=1;
-            for (int j=0;j<Ss-1;j++){
-                double f = (double)rand() / RAND_MAX;
-                double v= fMin + f * (fMax - fMin);
-                sum-=v;
-                pi[i].push_back(v);
-            }
-            pi[i].push_back(sum);
-        }
-        
-        std::vector<std::vector<EMovement>> obs(numberBirds);
+//        return cDontShoot;
+//    }
+//    
+//    else {
 
-        // We initialize A after 90 observations to try to have a better estimation of probabilities        
-        for(int i=0; i<numberBirds; i++){
-            Bird crB=pState.getBird(i);
-            int nobs=crB.getSeqLength();
-            
-            for (int k=0;k<nobs;k++){
-                obs[i].push_back(crB.getObservation(k));    
-            }
+//        std::vector<std::tuple <double,int>> probShootBird(numberBirds);
 
-//            cerr << "observations vector of bird: " << i << endl;            
+//        std::vector<std::vector<int>> obsind(numberBirds);
+//        vector<vector<double>> alpha(numberBirds);
+//            
+//        for(int i=0; i<numberBirds; i++){
+//            Bird crB=pState.getBird(i);
+//            int nobs=crB.getSeqLength();
 //            for (int k=0;k<nobs;k++){
-//                cerr << obs[i][k] << " ";    
+//                obsind[i].push_back(getIndex(crB.getObservation(k)));    
 //            }
-            cerr << endl;
-            int lastObs = getIndex(obs[i][0]);
-            int currentObs;
-            for (int k=1;k<nobs;k++){
-                 currentObs = getIndex(obs[i][k]);
-                 if(lastObs != -1){
-                    A[i].addelement(A[i].getelement(lastObs,currentObs)+1,lastObs,currentObs);
-                 }
-                 lastObs=currentObs;
-            }
-            A[i].normalize(); 
-            cerr <<"A matrix: " << A[i].print() << endl;
-            cerr << "B matrix: " << B[i].print() << endl;
-            cerr << "Pi vector: ";
-            for(int k=0;k<pi[i].size();k++){
-                cerr << pi[i][k] << " ";
-            }
-            cerr << endl;
-        }
+////            cerr << "antes de hmm3" << i << endl;
 
-        return cDontShoot;
-    }
-    
-    else {
+////            cerr <<"A matrix: " << A[i].print() << endl;
+////            cerr << "B matrix: " << B[i].print() << endl;
+////            cerr << "Pi vector: ";
+////            for(int k=0;k<pi[i].size();k++){
+////                cerr << pi[i][k] << " ";
+////            }
+////            cerr << endl;
 
-        std::vector<std::tuple <double,int>> probShootBird(numberBirds);
-
-        std::vector<std::vector<int>> obsind(numberBirds);
-        vector<vector<double>> alpha(numberBirds);
-            
-        for(int i=0; i<numberBirds; i++){
-            Bird crB=pState.getBird(i);
-            int nobs=crB.getSeqLength();
-            for (int k=0;k<nobs;k++){
-                obsind[i].push_back(getIndex(crB.getObservation(k)));    
-            }
-//            cerr << "antes de hmm3" << i << endl;
-
+//            // compute hmm3
+//            tuple<Matrix,Matrix,std::vector<double>> model = hmm3(A[i],B[i],pi[i],obsind[i]);
+//            A[i]=get<0>(model);
+//            B[i]=get<1>(model);
+//            pi[i]=get<2>(model);
+//           
 //            cerr <<"A matrix: " << A[i].print() << endl;
 //            cerr << "B matrix: " << B[i].print() << endl;
 //            cerr << "Pi vector: ";
@@ -229,78 +237,64 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
 //            }
 //            cerr << endl;
 
-            // compute hmm3
-            tuple<Matrix,Matrix,std::vector<double>> model = hmm3(A[i],B[i],pi[i],obsind[i]);
-            A[i]=get<0>(model);
-            B[i]=get<1>(model);
-            pi[i]=get<2>(model);
-           
-            cerr <<"A matrix: " << A[i].print() << endl;
-            cerr << "B matrix: " << B[i].print() << endl;
-            cerr << "Pi vector: ";
-            for(int k=0;k<pi[i].size();k++){
-                cerr << pi[i][k] << " ";
-            }
-            cerr << endl;
-
-            
-            cerr << "despues de hmm3" << i << endl;
-        
-            //compute HMM1, the alphas
-            Matrix aux = get<0> (alphapass(A[i],B[i],pi[i],obsind[i], obsind[i].size()));
-            alpha[i] = aux.getvector(aux.getn()-1);
+//            
+//            cerr << "despues de hmm3" << i << endl;
+//        
+//            //compute HMM1, the alphas
+//            Matrix aux = get<0> (alphapass(A[i],B[i],pi[i],obsind[i], obsind[i].size()));
+//            alpha[i] = aux.getvector(aux.getn()-1);
 
 
-            cerr << "alpha vector: ";
-            for(int k=0;k<alpha[i].size();k++){
-                cerr << alpha[i][k] << " ";
-            }
-            cerr << endl; 
-             cerr << "despues de hmm1" << i << endl;
+//            cerr << "alpha vector: ";
+//            for(int k=0;k<alpha[i].size();k++){
+//                cerr << alpha[i][k] << " ";
+//            }
+//            cerr << endl; 
+//             cerr << "despues de hmm1" << i << endl;
 
-            // We take the decision (to shoot or not to shoot)
-        
-            //calculate the sum of alphas and the state with more probability
-            double sum=0;
-            int maxi=0;
-            for(int j=0;j<alpha[i].size();j++){
-                sum+=alpha[i][j];
-                if(alpha[i][j]>alpha[i][maxi]){
-                    maxi = j;                
-                }
-            }
-//            cerr << "max prob" << alpha[i][maxi] << "sum "<< sum << endl;
-            //decision
-            if(alpha[i][maxi]>(probToShoot*sum)){
-                std::tuple<double,int> aux(alpha[i][maxi],maxi);
-                probShootBird[i]=aux;           
-            }
-            else {
-                std::tuple<double,int> aux(0,-1);
-                probShootBird[i]=aux;                
-            }
-        }
-        
-        //final decision, if some of the birds has probToShoot>0 we shoot at the maximum values
-        std::tuple<double,int> goalBird(0,-1);
-        int goalBirdNumber = 0;
-        for(int i=0; i<numberBirds; i++){
-            if(get<0>(probShootBird[i]) > get<0>(goalBird)){
-                goalBird=probShootBird[i];
-                goalBirdNumber = i;            
-            }
-        }
-        
-        if((get<0>(goalBird)) > 0){
-            cerr << "we shoot in timestep " << timestep << " round" << round << endl;
-            return Action(goalBirdNumber,getNextMovement(get<1>(goalBird)));
-        }
-        else{
-            cerr << "we dont shoot in timestep " << timestep << " round" << round << endl;
-            return cDontShoot;        
-        }
-       
-    }
+//            // We take the decision (to shoot or not to shoot)
+//        
+//            //calculate the sum of alphas and the state with more probability
+//            double sum=0;
+//            int maxi=0;
+//            for(int j=0;j<alpha[i].size();j++){
+//                sum+=alpha[i][j];
+//                if(alpha[i][j]>alpha[i][maxi]){
+//                    maxi = j;                
+//                }
+//            }
+////            cerr << "max prob" << alpha[i][maxi] << "sum "<< sum << endl;
+//            //decision
+//            if(alpha[i][maxi]>(probToShoot*sum)){
+//                std::tuple<double,int> aux(alpha[i][maxi],maxi);
+//                probShootBird[i]=aux;           
+//            }
+//            else {
+//                std::tuple<double,int> aux(0,-1);
+//                probShootBird[i]=aux;                
+//            }
+//        }
+//        
+//        //final decision, if some of the birds has probToShoot>0 we shoot at the maximum values
+//        std::tuple<double,int> goalBird(0,-1);
+//        int goalBirdNumber = 0;
+//        for(int i=0; i<numberBirds; i++){
+//            if(get<0>(probShootBird[i]) > get<0>(goalBird)){
+//                goalBird=probShootBird[i];
+//                goalBirdNumber = i;            
+//            }
+//        }
+//        
+//        if((get<0>(goalBird)) > 0){
+//            cerr << "we shoot in timestep " << timestep << " round" << round << endl;
+//            return Action(goalBirdNumber,getNextMovement(get<1>(goalBird)));
+//        }
+//        else{
+//            cerr << "we dont shoot in timestep " << timestep << " round" << round << endl;
+//            return cDontShoot;        
+//        }
+//       
+//    }
 
     // This line choose not to shoot
     return cDontShoot;
@@ -316,18 +310,112 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
     int round = pState.getRound();
     size_t numberBirds = pState.getNumBirds();
 
-    std::vector<ESpecies> lGuesses(nummberBirds, SPECIES_UNKNOWN);
+    std::vector<std::vector<int>> obs(numberBirds); // vector to keep all the observations made until this timestep
+                                                // we keep the movements as integers to use them as indexes for the matrixes
+    // get the new observations and keep them
+    for(int k=0; k<numberBirds; k++){
+        Bird crB=pState.getBird(k);
+        for (int j=0;j<crB.getSeqLength();j++){
+            obs[k].push_back(crB.getObservation(j));    
+        }
+    }
+
+
+    std::vector<ESpecies> lGuesses(numberBirds, SPECIES_UNKNOWN);
 
     int timestep=(pState.getBird(0)).getSeqLength();
 
-    if (round == 0){
-        // try to guess all the birds completely randomly    
+    if (round <= 0){
+        // try to guess all the species of the birds (try with pigeon)
+        for(int i=0; i<numberBirds-2; i++){
+            int guess = 0;
+            lGuesses[i] = getSpecie(guess);        
+        }  
     }
     else {
-        
+        for(int i=0; i<numSpecies; i++){
+            cerr << "A" << i << endl;
+            cerr << Ag[i].print() << endl;
+            cerr << "B" << i << endl;
+            cerr << Bg[i].print() << endl;
+            cerr << "pi" << i << endl;
+            for (int j=0; j<Sg; j++){
+                cerr << pig[i][j] << "  ";
+            }
+            cerr << endl;
+            cerr << "timestep" << timestep << endl;
+        }
 
+        // try to guess the specie of each bird
+        for (int j=0; j<numberBirds; j++){
+            std::vector<double> alphaBird (numSpecies);
+            for (int i=0; i<numSpecies; i++){
+                // we calculate the probability of his observation sequence with each hmm from each specie
+                alphaBird[i]= calcAlpha(Ag[i],Bg[i],pig[i],obs[j],timestep);
+            }
+            
+            cerr << "SEE my obs" << j << endl;
+            for (int i=0; i<timestep; i++){
+                cerr << obs[j][i] << " ";
+            }
+            cerr << endl;
+
+            cerr << "SEE my alphas" << j << endl;
+            for (int i=0; i<numSpecies; i++){
+                cerr << alphaBird[i] << " ";
+            }
+            cerr << endl;
+
+            // get the most likely specie the bird can be from
+            double confidence;
+            double secconfidence;
+            int guessedSpecie;
+            if (alphaBird[0] >= alphaBird [1]){
+                confidence = alphaBird[0];
+                secconfidence = alphaBird[1];
+                guessedSpecie = 0;
+            }
+            else {
+                confidence = alphaBird[1];
+                secconfidence = alphaBird[0];
+                guessedSpecie = 1;
+            }
+           
+            for (int i=2; i<numSpecies; i++){
+                if(alphaBird[i]>confidence){
+                    secconfidence = confidence;
+                    confidence = alphaBird[i];
+                    guessedSpecie = i;                
+                }
+                else if (alphaBird[i] > secconfidence){
+                    secconfidence = alphaBird[i];
+                }
+            }
+            
+            //scale the most likely one (it is a logaritmic probability)
+            confidence = (confidence - secconfidence) / 10;
+            cerr << "my confidence: " << confidence << endl;
+           
+//            auto max = std::max_element(alphaBird.begin(), alphaBird.end());
+//            double confidence = *max;
+//            int guessedSpecie = std::distance(alphaBird.begin(),max);
+
+            //we decide either to guess the specie or not depending on the confidence we have
+            if (confidence > minConfidence){
+                lGuesses[j] = getSpecie(guessedSpecie);
+            }
+            else {
+                lGuesses[j] = SPECIES_UNKNOWN;           
+            }
+        }
     }
-    
+
+    cerr << "MYGUESSES" << endl;
+
+    for(int i=0; i<numberBirds; i++){
+        cerr << lGuesses[i] << "  " << endl;       
+    }
+
     return lGuesses;
 }
 
@@ -344,15 +432,66 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
     /*
      * If you made any guesses, you will find out the true species of those birds in this function.
      */
-    if (pState.getRound() == 0){
-        //initialize the matrixes A,B,pi with the information from the first round (pSpecies and movements)
-        
-        // A
-    
-        // B
+    int round = pState.getRound();
+    size_t numberBirds = pState.getNumBirds();
 
-        // pi
+    std::vector<std::vector<int>> obs(numberBirds); // vector to keep all the observations made until this timestep
+                                                // we keep the movements as integers to use them as indexes for the matrixes
+
+    cerr << "Pescepcies" << endl;
+    for (int i=0; i<pSpecies.size();i++){
+        cerr << pSpecies[i] << endl;
     }
+
+
+    if (round <= 0){
+        //initialize the matrixes A,B,pi with the information from the first round or random (pSpecies and movements)
+        for (int i=0; i<numSpecies; i++){
+            // A
+            Ag[i].shuffle();
+
+            // B
+            Bg[i].shuffle();
+            
+            // pi
+            double average = 1/(double)Sg;
+            double ep=0.05*average; 
+            double fMax = average+ep;
+            double fMin = average-ep;
+            double sum=1;
+            for (int j=0;j<Sg-1;j++){
+                double f = (double)rand() / RAND_MAX;
+                double v= fMin + f * (fMax - fMin);
+                sum-=v;
+                pig[i].push_back(v);
+            }
+            pig[i].push_back(sum);
+        
+        }
+        
+    }
+    
+        // get the new observations and keep them
+        for(int k=0; k<numberBirds; k++){
+            Bird crB=pState.getBird(k);
+            for (int j=0;j<crB.getSeqLength();j++){
+                obs[k].push_back(crB.getObservation(j));    
+            }
+        }
+
+        // train the matrixes with the whole observation sequence of one the birds that correspond to an specie (if all of them deadline comes)
+        for (int i=0; i<numSpecies; i++){
+            bool trained = false;
+            for (int j=0; j<numberBirds && not trained; j++){
+                if (pSpecies[j] == i) {
+                    std::tuple<Matrix,Matrix,std::vector<double>> model = hmm3(Ag[i],Bg[i],pig[i],obs[j],(pState.getBird(j)).getSeqLength());
+                    Ag[i]=get<0>(model);
+                    Bg[i]=get<1>(model);
+                    pig[i]=get<2>(model);
+                    trained = true;
+                }
+            }
+        }
     
 }
 

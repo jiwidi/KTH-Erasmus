@@ -4,8 +4,6 @@
 
 using namespace std;
 
-
-
     Matrix::Matrix(const int n, const int m){
         this->n = n;
         this->m = m;
@@ -112,7 +110,7 @@ using namespace std;
             for(int j=0;j<m-1;j++){
                 double r1=((double) rand() / (RAND_MAX));
                 double r2=((double) rand() / (RAND_MAX));
-                double ep=0.05*(1/(double) m); 
+                double ep=0.1*(1/(double) m); 
                 v[j]+=r1*ep-(r2*ep);
                 sum=sum-v[j];
 
