@@ -56,34 +56,6 @@ tuple<Matrix,vector<double>> alphapass(const Matrix& A, const Matrix& B, const v
 }
 
 
-
-//Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
-//    
-//    int N=B.getn();
-
-//    Matrix beta(it,N); 
-//    
-//    Scale betat-1(i)
-//    for(int i=0; i<N; i++){
-//        beta.addelement(c[it-1], it-1, i);
-//    }
-
-//    Compute betat(i)
-//    for(int t=it-2; t>=0; t--){
-//        vector <double> bo=Btrans.getvector(obs[t+1]);
-//        for(int i=0; i<N; i++){
-//            beta.addelement(0,t,i);
-//            for(int j=0; j<N; j++){
-//                beta.addelement(beta.getelement(t,i)+A.getelement(i,j)*B.getelement(j,obs[t+1])*beta.getelement(t+1,j),t,i);
-//            }
-//            beta.addelement(c[t]*beta.getelement(t,i),t,i);
-//        }
-//    }
-//    
-//    return beta;
-
-//}
-
 Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
     int N= A.getn();
     Matrix beta(it,N);
@@ -249,7 +221,7 @@ int main(){
 
     // Start of the algorithm
 
-    int maxIters = 500; //maximum number of re-estimation iterations
+    int maxIters = 100; //maximum number of re-estimation iterations
     double oldLogProb = - numeric_limits<double>::max();    //minus infinity (here the minimum double that can be represented)
     double logProb=0;
 

@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
 #include "Matrix.cpp"
+#include <cmath>
 
 using namespace std;
 
-vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
+vector <double> elWise(const vector<double>& v1,const vector<double>& v2){
     vector<double> resul(v1.size());
     for (int i=0; i<v1.size();i++){
         resul[i]=v1[i]*v2[i];
@@ -12,28 +13,61 @@ vector <double> elementWise(const vector<double>& v1,const vector<double>& v2){
     return resul;
 }
 
-double calcAlpha(Matrix A,Matrix B,vector<double> pi,vector<int> obs){
+
+double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int nobs){
 	vector<double> alpha,alpham;
    	Matrix Btrans=B.transpose();
-   	alpham=elementWise(pi,Btrans.getvector(obs[0]));
-	
+
+    // calculate alpha0
+   	alpham=elWise(pi,Btrans.getvector(obs[0]));
+    vector<double> c(nobs,0);
+
+    // scale alpha0
+    for (int i=0; i<alpham.size();i++){
+        c[0] = c[0] + alpham[i];    
+    }
+    c[0] = 1/c[0];
+    for (int i=0; i<alpham.size();i++){
+        alpham[i] *= c[0];    
+    }
 
    	//Recursive alpha 
-   	for (int i=1; i< obs.size();i++){
+   	for (int i=1; i< nobs;i++){
    		int currentObs=obs[i];
 
    		alpham=A.transpose()*alpham;
 
    		Matrix Btrans=B.transpose();
 		vector <double> bi=Btrans.getvector(currentObs);
-		alpha=elementWise(alpham,bi);
+		alpha=elWise(alpham,bi);
+        
+        // scaling alpha
+        c[i]= 0;
+        for (int j=0; j<alpha.size();j++){
+            c[i] += alpha[j];      
+        }
+        c[i] = 1/c[i];
+        for (int j=0; j<alpha.size();j++){
+            alpha[j]*= c[i];      
+        }
    	   	alpham=alpha;
 	}
+
+    // calculate the log probability to avoid underflow
+
+    double sumlogc = 0;
+    for (int i=0; i<nobs; i++){
+        sumlogc+=log(c[i]);
+    }
 	double sum=0;
    	for(auto it= alpha.begin(); it!=alpha.end();it++){
    		sum+=*it;
    	}
-   	return sum;
+    double logar = log(sum);
+
+    // return the actual probability
+
+   	return exp(logar - sumlogc);
 }
 
 
@@ -89,7 +123,7 @@ int main(){
 
    	}
    	//Recursive alpha 
-   	double sum=calcAlpha(A,B,pi,obs);
+   	double sum=calcAlpha(A,B,pi,obs,nobs);
    	cout << sum;
 
 

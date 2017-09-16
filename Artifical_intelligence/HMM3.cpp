@@ -56,34 +56,6 @@ tuple<Matrix,vector<double>> alphapass(const Matrix& A, const Matrix& B, const v
 }
 
 
-
-//Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
-//    
-//    int N=B.getn();
-
-//    Matrix beta(it,N); 
-//    
-//    Scale betat-1(i)
-//    for(int i=0; i<N; i++){
-//        beta.addelement(c[it-1], it-1, i);
-//    }
-
-//    Compute betat(i)
-//    for(int t=it-2; t>=0; t--){
-//        vector <double> bo=Btrans.getvector(obs[t+1]);
-//        for(int i=0; i<N; i++){
-//            beta.addelement(0,t,i);
-//            for(int j=0; j<N; j++){
-//                beta.addelement(beta.getelement(t,i)+A.getelement(i,j)*B.getelement(j,obs[t+1])*beta.getelement(t+1,j),t,i);
-//            }
-//            beta.addelement(c[t]*beta.getelement(t,i),t,i);
-//        }
-//    }
-//    
-//    return beta;
-
-//}
-
 Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
     int N= A.getn();
     Matrix beta(it,N);
@@ -199,6 +171,66 @@ tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, 
     return result;
 }
 
+tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& Ain, const Matrix& Bin, const vector<double>& piin, const vector<int>& obs, const int nobs){
+   // Start of the algorithm
+
+    int maxIters = 100; //maximum number of re-estimation iterations
+    double oldLogProb = - numeric_limits<double>::max();    //minus infinity (here the minimum double that can be represented)
+    double logProb=0;
+
+    int N = Bin.getn(); //number of states
+    int M = Bin.getm(); //number of observations
+
+    Matrix A(N,N);
+    Matrix B(N,M);
+    vector<double> pi(N);
+
+    tuple<Matrix,vector<double>> alphaandc= alphapass(Ain,Bin,piin,obs,nobs);
+    vector<double> c = get<1>(alphaandc);
+    Matrix alpha = get<0>(alphaandc);
+    Matrix beta = betapass(Ain,Bin,obs,nobs,c);
+
+    tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(Ain,Bin,piin,obs,nobs,c, alpha,beta);
+    tuple<Matrix,Matrix,vector<double>> estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
+
+    A=get<0>(estimation);
+    B=get<1>(estimation);
+    pi=get<2>(estimation);
+
+    //compute log[P(O|lambda)]
+    for(int i=0; i<nobs; i++){
+        logProb = logProb + log(c[i]);
+    }
+    logProb = -logProb;
+
+    for (int i = 1; i < maxIters && logProb > oldLogProb; i++){
+
+        oldLogProb = logProb;
+
+        alphaandc= alphapass(A,B,pi,obs,nobs);
+        c = get<1>(alphaandc);
+        alpha = get<0>(alphaandc);
+        beta = betapass(A,B,obs,nobs,c);
+        gammas = gammaDigamma(A,B,pi,obs,nobs,c,alpha,beta);
+        estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
+
+        A=get<0>(estimation);
+        B=get<1>(estimation);
+        pi=get<2>(estimation);
+    
+        //compute log[P(O|lambda)]
+        logProb = 0;
+        for(int i=0; i<nobs; i++){
+            logProb = logProb + log(c[i]);
+        }
+        logProb = -logProb;
+    }
+    
+    tuple<Matrix,Matrix,vector<double>> result(A,B,pi);
+    return result;   
+
+}
+
 int main(){
 
     //First, we parse the input and get lambda and the observations vector
@@ -245,57 +277,11 @@ int main(){
         cin >> cobs;
         obs[i]=cobs;
     }
-    
 
-    // Start of the algorithm
 
-    int maxIters = 100; //maximum number of re-estimation iterations
-    double oldLogProb = - numeric_limits<double>::max();    //minus infinity (here the minimum double that can be represented)
-    double logProb=0;
-
-    int N = B.getn(); //number of states
-    int M = B.getm(); //number of observations
-
-    tuple<Matrix,vector<double>> alphaandc= alphapass(A,B,pi,obs,nobs);
-    vector<double> c = get<1>(alphaandc);
-    Matrix alpha = get<0>(alphaandc);
-    Matrix beta = betapass(A,B,obs,nobs,c);
-
-    tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(A,B,pi,obs,nobs,c, alpha,beta);
-    tuple<Matrix,Matrix,vector<double>> estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
-
-    A=get<0>(estimation);
-    B=get<1>(estimation);
-    pi=get<2>(estimation);
-
-    //compute log[P(O|lambda)]
-    for(int i=0; i<nobs; i++){
-        logProb = logProb + log(c[i]);
-    }
-    logProb = -logProb;
-
-    for (int i = 1; i < maxIters && logProb > oldLogProb; i++){
-
-        oldLogProb = logProb;
-
-        alphaandc= alphapass(A,B,pi,obs,nobs);
-        c = get<1>(alphaandc);
-        alpha = get<0>(alphaandc);
-        beta = betapass(A,B,obs,nobs,c);
-        gammas = gammaDigamma(A,B,pi,obs,nobs,c,alpha,beta);
-        estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
-
-        A=get<0>(estimation);
-        B=get<1>(estimation);
-        pi=get<2>(estimation);
-    
-        //compute log[P(O|lambda)]
-        logProb = 0;
-        for(int i=0; i<nobs; i++){
-            logProb = logProb + log(c[i]);
-        }
-        logProb = -logProb;
-    }
+    tuple<Matrix,Matrix,vector<double>> model = hmm3(A,B,pi,obs,nobs);
+    A=get<0>(model);
+    B=get<1>(model);
 
     //output A, B
 
