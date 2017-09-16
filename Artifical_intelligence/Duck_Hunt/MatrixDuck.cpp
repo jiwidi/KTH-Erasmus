@@ -120,6 +120,18 @@ using namespace std;
         }
     }
 
+    void Matrix::avoidzeros(){
+        double epsilon = 0.000001;
+        for (int i=0; i<n; i++){
+            for (int j=0; j<m; j++){
+                if (matrix[i][j]==0){
+                    matrix[i][j] = epsilon;                
+                }
+            }
+        }
+        this->normalize();
+    }
+
     vector<double> Matrix::operator*(const vector<double>& v){
         vector<double> resul(m,0);
         if(m != v.size()){

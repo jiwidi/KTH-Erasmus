@@ -105,7 +105,6 @@ EMovement getNextMovement(int ind){
     }
 }
 
-
 Action Player::shoot(const GameState &pState, const Deadline &pDue)
 {
     /*
@@ -333,6 +332,7 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
         }  
     }
     else {
+        cerr << "round" << round << endl;
         for(int i=0; i<numSpecies; i++){
             cerr << "A" << i << endl;
             cerr << Ag[i].print() << endl;
@@ -343,7 +343,6 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
                 cerr << pig[i][j] << "  ";
             }
             cerr << endl;
-            cerr << "timestep" << timestep << endl;
         }
 
         // try to guess the specie of each bird
@@ -488,6 +487,8 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
                     Ag[i]=get<0>(model);
                     Bg[i]=get<1>(model);
                     pig[i]=get<2>(model);
+                    Ag[i].avoidzeros();
+                    Bg[i].avoidzeros();
                     trained = true;
                 }
             }

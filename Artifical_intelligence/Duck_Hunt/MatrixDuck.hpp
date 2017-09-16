@@ -40,6 +40,8 @@ public:
     void normalize();
     
     void shuffle();
+        
+    void avoidzeros();
 
     vector<double> operator*(const vector<double>& v);
 
