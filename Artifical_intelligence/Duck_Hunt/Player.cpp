@@ -43,7 +43,7 @@ std::vector<Matrix> Bg(numSpecies,auxBg);
 
 std::vector<std::vector<double>> pig(numSpecies);
 
-const double minConfidence=0.035;
+const double minConfidence=0.98;
 
 
 
@@ -326,24 +326,24 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
 
     if (round <= 0){
         // try to guess all the species of the birds (try with pigeon)
-        for(int i=0; i<numberBirds-2; i++){
+        for(int i=0; i<numberBirds; i++){
             int guess = 0;
             lGuesses[i] = getSpecie(guess);        
         }  
     }
     else {
-        cerr << "round" << round << endl;
-        for(int i=0; i<numSpecies; i++){
-            cerr << "A" << i << endl;
-            cerr << Ag[i].print() << endl;
-            cerr << "B" << i << endl;
-            cerr << Bg[i].print() << endl;
-            cerr << "pi" << i << endl;
-            for (int j=0; j<Sg; j++){
-                cerr << pig[i][j] << "  ";
-            }
-            cerr << endl;
-        }
+//        cerr << "round" << round << endl;
+//        for(int i=0; i<numSpecies; i++){
+//            cerr << "A" << i << endl;
+//            cerr << Ag[i].print() << endl;
+//            cerr << "B" << i << endl;
+//            cerr << Bg[i].print() << endl;
+//            cerr << "pi" << i << endl;
+//            for (int j=0; j<Sg; j++){
+//                cerr << pig[i][j] << "  ";
+//            }
+//            cerr << endl;
+//        }
 
         // try to guess the specie of each bird
         for (int j=0; j<numberBirds; j++){
@@ -353,11 +353,11 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
                 alphaBird[i]= calcAlpha(Ag[i],Bg[i],pig[i],obs[j],timestep);
             }
             
-            cerr << "SEE my obs" << j << endl;
-            for (int i=0; i<timestep; i++){
-                cerr << obs[j][i] << " ";
-            }
-            cerr << endl;
+//            cerr << "SEE my obs" << j << endl;
+//            for (int i=0; i<timestep; i++){
+//                cerr << obs[j][i] << " ";
+//            }
+//            cerr << endl;
 
             cerr << "SEE my alphas" << j << endl;
             for (int i=0; i<numSpecies; i++){
@@ -365,34 +365,30 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
             }
             cerr << endl;
 
-            // get the most likely specie the bird can be from
-            double confidence;
-            double secconfidence;
-            int guessedSpecie;
-            if (alphaBird[0] >= alphaBird [1]){
-                confidence = alphaBird[0];
-                secconfidence = alphaBird[1];
-                guessedSpecie = 0;
-            }
-            else {
-                confidence = alphaBird[1];
-                secconfidence = alphaBird[0];
-                guessedSpecie = 1;
-            }
+            // get the most likely specie the bird can be from and its confidence
+            double confidence=alphaBird[0];
+            int guessedSpecie=0;
            
-            for (int i=2; i<numSpecies; i++){
+            for (int i=1; i<numSpecies; i++){
                 if(alphaBird[i]>confidence){
-                    secconfidence = confidence;
                     confidence = alphaBird[i];
                     guessedSpecie = i;                
                 }
-                else if (alphaBird[i] > secconfidence){
-                    secconfidence = alphaBird[i];
-                }
+            }
+
+            //e^otherconf - confidence is the probability of each specie given guessedSpecie
+            vector<double> otherconf(numSpecies);
+            double sum = 0;
+            cerr << "sum" << endl;
+            for (int i=0; i<numSpecies; i++){
+                otherconf[i] = exp(alphaBird[i] - confidence); 
+                sum = sum + otherconf[i]; 
+                cerr << "paso i: " << sum << endl;        
             }
             
             //scale the most likely one (it is a logaritmic probability)
-            confidence = (confidence - secconfidence) / 10;
+            double logsumpi= log(sum) + confidence;
+            confidence = exp(confidence - logsumpi);
             cerr << "my confidence: " << confidence << endl;
            
 //            auto max = std::max_element(alphaBird.begin(), alphaBird.end());
@@ -400,7 +396,7 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
 //            int guessedSpecie = std::distance(alphaBird.begin(),max);
 
             //we decide either to guess the specie or not depending on the confidence we have
-            if (confidence > minConfidence){
+            if (confidence >= minConfidence){
                 lGuesses[j] = getSpecie(guessedSpecie);
             }
             else {
@@ -434,8 +430,7 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
     int round = pState.getRound();
     size_t numberBirds = pState.getNumBirds();
 
-    std::vector<std::vector<int>> obs(numberBirds); // vector to keep all the observations made until this timestep
-                                                // we keep the movements as integers to use them as indexes for the matrixes
+   
 
     cerr << "Pescepcies" << endl;
     for (int i=0; i<pSpecies.size();i++){
