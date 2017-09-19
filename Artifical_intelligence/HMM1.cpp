@@ -22,13 +22,21 @@ double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, con
    	alpham=elWise(pi,Btrans.getvector(obs[0]));
     vector<double> c(nobs,0);
 
+    cerr << "mis alphitas" << endl;
+
+    for (int i=0; i<alpham.size();i++){
+        cerr << alpham[i] << " "; 
+    }
     // scale alpha0
     for (int i=0; i<alpham.size();i++){
         c[0] = c[0] + alpham[i];    
     }
     c[0] = 1/c[0];
+    cerr << "mis alphitas escaladas" << endl;
+    cerr << "escala" << c[0] << endl; 
     for (int i=0; i<alpham.size();i++){
-        alpham[i] *= c[0];    
+        alpham[i] *= c[0];  
+        cerr << alpham[i] << " "; 
     }
 
    	//Recursive alpha 
@@ -47,8 +55,10 @@ double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, con
             c[i] += alpha[j];      
         }
         c[i] = 1/c[i];
+        cerr << "alphitas" << i << endl;
         for (int j=0; j<alpha.size();j++){
-            alpha[j]*= c[i];      
+            alpha[j]*= c[i];  
+            cerr << alpha[j] << " ";    
         }
    	   	alpham=alpha;
 	}

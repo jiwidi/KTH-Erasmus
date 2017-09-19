@@ -65,7 +65,7 @@ double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, con
    	}
     double logar = log(sum);
 
-   	return (logar - sumlogc);
+   	return exp(logar - sumlogc);
 }
 
 // ------------------------- HMM3 -----------------------

@@ -34,17 +34,17 @@ std::vector<std::vector<double>> pis(maxNumBirds);
 const int Sg = 5;
 const int Og = 9;
 const int numSpecies = 6;
+ 
+std::vector<std::vector<Matrix>> Ag(numSpecies);
 
-Matrix auxAg(Sg,Sg,epsilon);  
-std::vector<Matrix> Ag(numSpecies,auxAg);
+std::vector<std::vector<Matrix>> Bg(numSpecies);
 
-Matrix auxBg(Sg,Og,epsilon);
-std::vector<Matrix> Bg(numSpecies,auxBg);
+std::vector<std::vector<std::vector<double>>> pig(numSpecies);
 
-std::vector<std::vector<double>> pig(numSpecies);
+double minConfidence=0.96;
+double ratio=0;
 
-const double minConfidence=0.98;
-
+std::vector<ESpecies> Myguesses(maxNumBirds);
 
 
 ESpecies getSpecie(int ind){
@@ -103,6 +103,16 @@ EMovement getNextMovement(int ind){
     else {
         return MOVE_DEAD;
     }
+}
+
+int numequals (const vector<ESpecies>& v1, const vector<ESpecies>& v2, const int n){
+    int equal=0;    
+    for (int i=0; i<n;i++){
+        if (v1[i]==v2[i]){
+            equal+=1;
+          }
+    }
+    return equal;
 }
 
 Action Player::shoot(const GameState &pState, const Deadline &pDue)
@@ -309,56 +319,41 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
     int round = pState.getRound();
     size_t numberBirds = pState.getNumBirds();
 
-    std::vector<std::vector<int>> obs(numberBirds); // vector to keep all the observations made until this timestep
-                                                // we keep the movements as integers to use them as indexes for the matrixes
-    // get the new observations and keep them
+    std::vector<std::vector<int>> obsBirds(numberBirds); // vector to keep all the observations of each bird made in the round
+                                                          // we keep the movements as integers to use them as indexes for the matrixes
+    // get the new observations of the birds
     for(int k=0; k<numberBirds; k++){
         Bird crB=pState.getBird(k);
         for (int j=0;j<crB.getSeqLength();j++){
-            obs[k].push_back(crB.getObservation(j));    
+            obsBirds[k].push_back(crB.getObservation(j));    
         }
     }
 
 
     std::vector<ESpecies> lGuesses(numberBirds, SPECIES_UNKNOWN);
 
-    int timestep=(pState.getBird(0)).getSeqLength();
-
     if (round <= 0){
-        // try to guess all the species of the birds (try with pigeon)
+        // try to guess all the species of the birds (try with one of them)
         for(int i=0; i<numberBirds; i++){
             int guess = 0;
             lGuesses[i] = getSpecie(guess);        
         }  
     }
     else {
-//        cerr << "round" << round << endl;
-//        for(int i=0; i<numSpecies; i++){
-//            cerr << "A" << i << endl;
-//            cerr << Ag[i].print() << endl;
-//            cerr << "B" << i << endl;
-//            cerr << Bg[i].print() << endl;
-//            cerr << "pi" << i << endl;
-//            for (int j=0; j<Sg; j++){
-//                cerr << pig[i][j] << "  ";
-//            }
-//            cerr << endl;
-//        }
 
-        // try to guess the specie of each bird
+        // try to guess the specie of each bird with the forward algorithm
         for (int j=0; j<numberBirds; j++){
             std::vector<double> alphaBird (numSpecies);
             for (int i=0; i<numSpecies; i++){
+                double sum =0;
                 // we calculate the probability of his observation sequence with each hmm from each specie
-                alphaBird[i]= calcAlpha(Ag[i],Bg[i],pig[i],obs[j],timestep);
+                for (int k=0; k<Ag[i].size(); k++){
+                    sum = sum + calcAlpha(Ag[i][k],Bg[i][k],pig[i][k],obsBirds[j],(pState.getBird(j)).getSeqLength());
+                }
+                // the probability of this observation sequence with this specie is the mean of the last calculations
+                alphaBird[i]= sum/Ag[i].size();
             }
             
-//            cerr << "SEE my obs" << j << endl;
-//            for (int i=0; i<timestep; i++){
-//                cerr << obs[j][i] << " ";
-//            }
-//            cerr << endl;
-
             cerr << "SEE my alphas" << j << endl;
             for (int i=0; i<numSpecies; i++){
                 cerr << alphaBird[i] << " ";
@@ -376,32 +371,40 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
                 }
             }
 
-            //e^otherconf - confidence is the probability of each specie given guessedSpecie
-            vector<double> otherconf(numSpecies);
-            double sum = 0;
-            cerr << "sum" << endl;
-            for (int i=0; i<numSpecies; i++){
-                otherconf[i] = exp(alphaBird[i] - confidence); 
-                sum = sum + otherconf[i]; 
-                cerr << "paso i: " << sum << endl;        
-            }
-            
-            //scale the most likely one (it is a logaritmic probability)
-            double logsumpi= log(sum) + confidence;
-            confidence = exp(confidence - logsumpi);
-            cerr << "my confidence: " << confidence << endl;
-           
-//            auto max = std::max_element(alphaBird.begin(), alphaBird.end());
-//            double confidence = *max;
-//            int guessedSpecie = std::distance(alphaBird.begin(),max);
-
-            //we decide either to guess the specie or not depending on the confidence we have
-            if (confidence >= minConfidence){
+//            //e^otherconf - confidence is the probability of each specie given guessedSpecie
+//            vector<double> otherconf(numSpecies);
+//            double sum = 0;
+//            cerr << "sum" << endl;
+//            for (int i=0; i<numSpecies; i++){
+//                otherconf[i] = exp(alphaBird[i] - confidence); 
+//                sum = sum + otherconf[i]; 
+//                cerr << "paso i: " << sum << endl;        
+//            }
+//            
+//            //scale the most likely one (it is a logaritmic probability)
+//            double logsumpi= log(sum) + confidence;
+//            confidence = exp (confidence - logsumpi);
+//            cerr << "my confidence: " << confidence << endl;
+//           
+////            auto max = std::max_element(alphaBird.begin(), alphaBird.end());
+////            double confidence = *max;
+////            int guessedSpecie = std::distance(alphaBird.begin(),max);
+//            if (ratio < 0.5){
+//                minConfidence = 0.96;            
+//            }
+//            else if (ratio >= 0.5 && ratio <0.7){
+//                minConfidence = 0.9;            
+//            }
+//            else {
+//                minConfidence = 0.8;            
+//            }
+//            //we decide either to guess the specie or not depending on the confidence we have
+//            if (confidence >= minConfidence){
                 lGuesses[j] = getSpecie(guessedSpecie);
-            }
-            else {
-                lGuesses[j] = SPECIES_UNKNOWN;           
-            }
+//            }
+//            else {
+//                lGuesses[j] = SPECIES_UNKNOWN;           
+//            }
         }
     }
 
@@ -410,7 +413,8 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
     for(int i=0; i<numberBirds; i++){
         cerr << lGuesses[i] << "  " << endl;       
     }
-
+    
+    Myguesses = lGuesses;
     return lGuesses;
 }
 
@@ -428,66 +432,77 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
      * If you made any guesses, you will find out the true species of those birds in this function.
      */
     int round = pState.getRound();
-    size_t numberBirds = pState.getNumBirds();
+    size_t numberBirds = pSpecies.size();
 
-   
+    ratio = numequals(Myguesses,pSpecies,numberBirds) / (double)numberBirds;
 
-    cerr << "Pescepcies" << endl;
+    cerr << "pSpecies" << endl;
     for (int i=0; i<pSpecies.size();i++){
         cerr << pSpecies[i] << endl;
     }
-
-
-    if (round <= 0){
-        //initialize the matrixes A,B,pi with the information from the first round or random (pSpecies and movements)
-        for (int i=0; i<numSpecies; i++){
+    cerr << "Ratio correct guesses: " << ratio << endl;
+    //initialize the matrixes A,B,pi of each bird random and train them with its observations
+    for (int i=0; i<numberBirds; i++){
             // A
-            Ag[i].shuffle();
+        Matrix A (Sg,Sg);
+        A.shuffle();
 
             // B
-            Bg[i].shuffle();
+        Matrix B (Sg,Og);
+        B.shuffle();
             
             // pi
-            double average = 1/(double)Sg;
-            double ep=0.05*average; 
-            double fMax = average+ep;
-            double fMin = average-ep;
-            double sum=1;
-            for (int j=0;j<Sg-1;j++){
-                double f = (double)rand() / RAND_MAX;
-                double v= fMin + f * (fMax - fMin);
-                sum-=v;
-                pig[i].push_back(v);
-            }
-            pig[i].push_back(sum);
-        
+        std::vector<double> pi (Sg);
+        double average = 1/(double)Sg;
+        double ep=0.05*average; 
+        double fMax = average+ep;
+        double fMin = average-ep;
+        double sum=1;
+        for (int j=0;j<Sg-1;j++){
+            double f = (double)rand() / RAND_MAX;
+            double v= fMin + f * (fMax - fMin);
+            sum-=v;
+            pi.push_back(v);
         }
-        
-    }
-    
-        // get the new observations and keep them
-        for(int k=0; k<numberBirds; k++){
-            Bird crB=pState.getBird(k);
-            for (int j=0;j<crB.getSeqLength();j++){
-                obs[k].push_back(crB.getObservation(j));    
+        pi.push_back(sum);
+
+            //get the observations of this bird
+        int nobs=(pState.getBird(i)).getSeqLength();
+        std::vector<int> obs;
+        for(int j=0; j<nobs; j++){
+            if(pState.getBird(i).wasAlive(i)){
+                obs.push_back(pState.getBird(i).getObservation(j));
             }
         }
 
-        // train the matrixes with the whole observation sequence of one the birds that correspond to an specie (if all of them deadline comes)
-        for (int i=0; i<numSpecies; i++){
-            bool trained = false;
-            for (int j=0; j<numberBirds && not trained; j++){
-                if (pSpecies[j] == i) {
-                    std::tuple<Matrix,Matrix,std::vector<double>> model = hmm3(Ag[i],Bg[i],pig[i],obs[j],(pState.getBird(j)).getSeqLength());
-                    Ag[i]=get<0>(model);
-                    Bg[i]=get<1>(model);
-                    pig[i]=get<2>(model);
-                    Ag[i].avoidzeros();
-                    Bg[i].avoidzeros();
-                    trained = true;
-                }
-            }
+            // train the hmm for each bird
+            cerr << "Aantes " << A.print() << endl;
+            cerr << "Bantes " << B.print() << endl;
+    
+            cerr << "obs" << endl;
+            cerr << "nobs: " << nobs << endl;
+        for(int j=0; j<nobs; j++){
+            cerr << obs[j] << " ";
         }
+        cerr << endl;
+
+        std::tuple<Matrix,Matrix,std::vector<double>> model = hmm3(A,B,pi,obs,nobs);
+        A=get<0>(model);
+        B=get<1>(model);
+        pi=get<2>(model);
+
+        // get the real specie of this bird
+        int specie = pSpecies[i];
+
+        cerr << "Adespues " << A.print() << endl;
+        cerr << "Bdespues " << B.print() << endl;
+            
+        // add the trained model to the vector of its specie
+        Ag[specie].push_back(A);
+        Bg[specie].push_back(B);
+        pig[specie].push_back(pi);
+        
+    }
     
 }
 
