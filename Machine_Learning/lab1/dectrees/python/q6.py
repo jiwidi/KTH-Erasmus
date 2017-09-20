@@ -4,7 +4,7 @@ import dtree as d
 import monkdata as m
 import numpy as np
 import plotly
-from statistics import pvariance 
+from statistics import pvariance
 import plotly.graph_objs as go
 
 plotly.tools.set_credentials_file(username='jiwidi', api_key='qMue368p0yeZMLP7rxmU')
@@ -25,6 +25,17 @@ variancemonk3=[]
 monk1data=[]
 monk3data=[]
 
+monk1simple=[]
+monk3simple=[]
+
+for v in fraction:
+    monk1train,monk1test=partition(m.monk1,v)
+    monk3train,monk3test=partition(m.monk3,v)
+    monk1tree=d.buildTree(monk1train,m.attributes)
+    monk3tree=d.buildTree(monk3train,m.attributes)
+    monk1simple.append(d.check(monk1tree,monk1test))
+    monk3simple.append(d.check(monk3tree,monk3test))
+
 #Monk1 evaluation
 for v in fraction:
     value=0
@@ -44,7 +55,7 @@ for v in fraction:
                     topPerformance=performance
                     monk1tree=tree
         valuesmonk1.append(d.check(monk1tree,monk1test))
-    print("Monk1 fraction "+ str(v))  
+    print("Monk1 fraction "+ str(v))
     mean=np.mean(valuesmonk1)
     print("    Error: "+str(1-mean))
     monk1data.append(1-mean)
@@ -85,37 +96,44 @@ for v in fraction:
 trace1 = go.Scatter(
     x=fraction,
     y=monk1data,
-    name = '<b>Monk1 error</b> Gaps', # Style name/legend entry with html tags
-    connectgaps=True
+    name = '<b>Monk1 fraction error</b>', # Style name/legend entry with html tags
+    connectgaps=False
 )
 trace2 = go.Scatter(
     x=fraction,
     y=monk3data,
-    name = '<b>Monk3 error</b> Gaps', # Style name/legend entry with html tags
-    connectgaps=True
+    name = '<b>Monk3 fraction error</b>', # Style name/legend entry with html tags
+    connectgaps=False
+)
+trace1s = go.Scatter(
+    x=fraction,
+    y=monk1simple,
+    name='<b>Monk1 error </b>'
+)
+
+trace3s = go.Scatter(
+    x=fraction,
+    y=monk3simple,
+    name='<b>Monk3 error </b>'
+
 )
 trace4 = go.Scatter(
     x=fraction,
     y=variancemonk1,
-    name = '<b>Monk1 variance</b> Gaps', # Style name/legend entry with html tags
-    line=dict(
-        color='rgba(0,100,80,0.2)'),
+    name = '<b>Monk1 variance</b>', # Style name/legend entry with html tags
     connectgaps=True
 )
 trace3 = go.Scatter(
     x=fraction,
     y=variancemonk3,
-    name = '<b>Monk3 variance</b> Gaps', # Style name/legend entry with html tags
+    name = '<b>Monk3 variance</b>', # Style name/legend entry with html tags
     fillcolor='rgba(0,100,80,0.2)',
-    connectgaps=True,
-    line=dict(
-    color='rgba(0,100,80,0.2)')
+    connectgaps=True
 )
-
-data = [trace1, trace2,trace3,trace4]
+data =[trace1,trace2,trace1s,trace3s]
 fig = dict(data=data)
 
-plotly.plotly.iplot(fig, filename='Q7 ML lab1')
+plotly.plotly.iplot(fig, filename='Q7 ML lab1 with err ')
 
 
 
