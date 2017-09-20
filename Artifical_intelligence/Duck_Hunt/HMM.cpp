@@ -1,13 +1,15 @@
-#include <iostream>
-#include <vector>
-#include <tuple>
-#include <limits>
+/* HMM.cpp - Assignment 1 AI
+ * Julia Guerrero Viu && Jaime Ferrando Huertas
+ * Class HMM which represents a model of a Hidden Markov Model
+ */
+
+#include "HMM.hpp"
 #include <cmath>
-#include "HMMDuck.hpp"
+#include <limits>
 
 using namespace std;
 
-// ------------------------- HMM1 -----------------------
+// -----------Auxiliary function ------------------
 
 vector <double> elWise(const vector<double>& v1,const vector<double>& v2){
     vector<double> resul(v1.size());
@@ -17,9 +19,59 @@ vector <double> elWise(const vector<double>& v1,const vector<double>& v2){
     return resul;
 }
 
-//returns the log of the probability
+//-------------------------------------------------
 
-double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int nobs){
+HMM::HMM(const int st, const int obs){
+    Matrix newA(st,obs);
+    Matrix newB(st,obs);
+    
+    newA.shuffle();
+    newB.shuffle();
+
+    double average = 1/(double)st;
+    double ep=0.05*average; 
+    double fMax = average+ep;
+    double fMin = average-ep;
+    double sum=1;
+    for (int j=0;j<st-1;j++){
+        double f = (double)rand() / RAND_MAX;
+        double v= fMin + f * (fMax - fMin);
+        sum-=v;
+        pi.push_back(v);
+    }
+    pi.push_back(sum);
+    
+    this->A=newA;
+    this->B=newB;
+}
+
+HMM::HMM(const Matrix& A, const Matrix& B, const vector<double>& pi){
+    this->A=A;
+    this->B=B;
+    this->pi=pi;
+}
+
+int HMM::getst() const{
+    return A.getn();
+}
+
+int HMM::getobs() const{
+    return B.getm();
+}
+
+Matrix HMM::getA() const{
+    return A;    
+}
+
+Matrix HMM::getB() const{
+    return B;
+}
+
+
+// uses scaling to calculate alpha and avoid underflow
+double HMM::hmm1(const vector<int>& obs) const{
+
+    int nobs = obs.size();
 	vector<double> alpha,alpham;
    	Matrix Btrans=B.transpose();
    	alpham=elWise(pi,Btrans.getvector(obs[0]));
@@ -63,14 +115,13 @@ double calcAlpha(const Matrix& A, const Matrix& B, const vector<double>& pi, con
    	for(auto it= alpha.begin(); it!=alpha.end();it++){
    		sum+=*it;
    	}
-    double logar = log(sum);
 
-   	return (logar - sumlogc);
+   	return exp(log(sum) - sumlogc);
 }
 
 // ------------------------- HMM3 -----------------------
 
-tuple<Matrix,vector<double>> alphapass(const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int it){
+tuple<Matrix,vector<double>> HMM::alphapass(const vector<int>& obs, const int it) const {
     
     Matrix Btrans=B.transpose();
     int N = Btrans.getm();
@@ -119,7 +170,7 @@ tuple<Matrix,vector<double>> alphapass(const Matrix& A, const Matrix& B, const v
 }
 
 
-Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const int it, const vector<double>& c){
+Matrix HMM::betapass (const vector<int>& obs, const int it, const vector<double>& c) const{
     int N= A.getn();
     Matrix beta(it,N);
 
@@ -143,7 +194,7 @@ Matrix betapass (const Matrix& A, const Matrix& B, const vector<int>& obs, const
 }
 
 
-tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, const vector<double>& pi, const vector<int>& obs, const int it, const vector<double>& c, const Matrix& alpha, const Matrix& beta){
+tuple<vector<Matrix>,Matrix> HMM::gammaDigamma (const vector<int>& obs, const int it, const vector<double>& c, const Matrix& alpha, const Matrix& beta) const {
     
     int N= A.getn();
 
@@ -189,6 +240,18 @@ tuple<vector<Matrix>,Matrix> gammaDigamma (const Matrix& A, const Matrix& B, con
 
 }
 
+vector<double> HMM::gamma(const vector<int>&obs, const int it) const{
+    tuple<Matrix,vector<double>> alphaandc= this->alphapass(obs,it);
+    vector<double> c = get<1>(alphaandc);
+    Matrix alpha = get<0>(alphaandc);
+    Matrix beta = this->betapass(obs,it,c);
+
+    tuple<vector<Matrix>,Matrix> gammas = this->gammaDigamma(obs,it,c, alpha,beta);
+
+    return get<1>(gammas).getvector(it-1);
+}
+
+// -----------Auxiliary function ------------------
 tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, const Matrix& gamma, const vector<int>& obs, const int it, const int N, const int M){
 
     Matrix A(N,N);
@@ -232,33 +295,33 @@ tuple<Matrix,Matrix,vector<double>> reestimation(const vector<Matrix>& digamma, 
     return result;
 }
 
+//-------------------------------------------------
 
 
-tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& Ain, const Matrix& Bin, const vector<double>& piin, const vector<int>& obs, const int nobs){
+
+void HMM::hmm3(const vector<int>& obs){
    // Start of the algorithm
 
     int maxIters = 100; //maximum number of re-estimation iterations
     double oldLogProb = - numeric_limits<double>::max();    //minus infinity (here the minimum double that can be represented)
     double logProb=0;
 
-    int N = Bin.getn(); //number of states
-    int M = Bin.getm(); //number of observations
+    int nobs= obs.size();
 
-    Matrix A(N,N);
-    Matrix B(N,M);
-    vector<double> pi(N);
+    int N = B.getn(); //number of states
+    int M = B.getm(); //number of observations
 
-    tuple<Matrix,vector<double>> alphaandc= alphapass(Ain,Bin,piin,obs,nobs);
+    tuple<Matrix,vector<double>> alphaandc= this->alphapass(obs,nobs);
     vector<double> c = get<1>(alphaandc);
     Matrix alpha = get<0>(alphaandc);
-    Matrix beta = betapass(Ain,Bin,obs,nobs,c);
+    Matrix beta = this->betapass(obs,nobs,c);
 
-    tuple<vector<Matrix>,Matrix> gammas = gammaDigamma(Ain,Bin,piin,obs,nobs,c, alpha,beta);
+    tuple<vector<Matrix>,Matrix> gammas = this->gammaDigamma(obs,nobs,c, alpha,beta);
     tuple<Matrix,Matrix,vector<double>> estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
 
-    A=get<0>(estimation);
-    B=get<1>(estimation);
-    pi=get<2>(estimation);
+    this->A=get<0>(estimation);
+    this->B=get<1>(estimation);
+    this->pi=get<2>(estimation);
 
     //compute log[P(O|lambda)]
     for(int i=0; i<nobs; i++){
@@ -270,16 +333,18 @@ tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& Ain, const Matrix& Bin, c
 
         oldLogProb = logProb;
 
-        alphaandc= alphapass(A,B,pi,obs,nobs);
+        alphaandc= this->alphapass(obs,nobs);
         c = get<1>(alphaandc);
         alpha = get<0>(alphaandc);
-        beta = betapass(A,B,obs,nobs,c);
-        gammas = gammaDigamma(A,B,pi,obs,nobs,c,alpha,beta);
+        beta = this->betapass(obs,nobs,c);
+        gammas = this->gammaDigamma(obs,nobs,c,alpha,beta);
         estimation = reestimation (get<0>(gammas), get<1>(gammas), obs, nobs, N, M);
 
-        A=get<0>(estimation);
-        B=get<1>(estimation);
-        pi=get<2>(estimation);
+        this->A=get<0>(estimation);
+        this->B=get<1>(estimation);
+        this->pi=get<2>(estimation);
+        A.avoidzeros();
+        B.avoidzeros();
     
         //compute log[P(O|lambda)]
         logProb = 0;
@@ -288,8 +353,60 @@ tuple<Matrix,Matrix,vector<double>> hmm3(const Matrix& Ain, const Matrix& Bin, c
         }
         logProb = -logProb;
     }
-    
-    tuple<Matrix,Matrix,vector<double>> result(A,B,pi);
-    return result;   
 
+}
+
+string HMM::print(){
+    string a ="Transition matrix A:\n" + A.print() + "Observation matrix B:\n" + B.print() + "Initial distribution pi:\n";
+    for (int i=0;i<pi.size();i++){
+        a = a + " " + to_string(pi[i]);
+    }
+    a = a+ '\n';
+    return a;
+}
+
+int HMM::calculateState(const vector<int>& obs){
+	Matrix Btrans=B.transpose();
+	Matrix Atrans=A.transpose();
+	vector<double> deltam=elWise(pi,Btrans.getvector(obs[0]));
+	vector<int> states;
+	Matrix StatesIndexes(obs.size(),A.getm());
+	vector<double> delta;
+	for (int i=1; i< obs.size();i++){
+		delta.clear();
+		for (int o=0;o<A.getn();o++){
+			vector<double> currentObs=Btrans.getvector(obs[i]);
+			vector<double> aux2(currentObs.size(),currentObs[o]);
+			vector<double> aux=elWise(elWise(deltam,Atrans.getvector(o)),aux2);
+			auto biggest=max_element(aux.begin(), aux.end());
+			delta.push_back(*biggest);
+			int indexBiggest=distance(begin(aux),biggest);
+			StatesIndexes.addelement(indexBiggest,i,o);
+		}
+		
+		deltam=delta;
+
+		
+	}
+    auto deltaBiggest=max_element(delta.begin(), delta.end());
+    return *deltaBiggest;
+}
+
+
+tuple<int,double> HMM::nextObs(const vector<int>& obs){
+    vector<double> gamma = this->gamma(obs, obs.size());
+    vector<double> nextstates = A*gamma;
+    Matrix Btrans=B.transpose();
+    vector<double> nextobs = Btrans*nextstates;
+
+    int imax =0;
+    double max=nextobs[0];
+    for(int i=1;i<nextobs.size();i++){
+        if(nextobs[i]>max){
+            max=nextobs[i];
+            imax =i;
+        }
+    }
+    tuple<int,double> result(imax,max);
+    return result;
 }
