@@ -10,9 +10,11 @@ class Sample:
 class Attribute:
     "Label for each attribute"
 
+
     def __init__(self, name, values):
         self.name = name
         self.values = values
+
 
     def __repr__(self):
         return self.name
@@ -46,7 +48,7 @@ monk1 = (
  Sample(False, (1, 2, 1, 2, 4, 2), 64),
  Sample(False, (1, 2, 1, 3, 2, 1), 67),
  Sample(False, (1, 2, 1, 3, 4, 2), 72),
- Sample(False, (1, 2, 2, 1, 2, 2), 76),
+    Sample(False, (1, 2, 2, 1, 2, 2), 76),
  Sample(False, (1, 2, 2, 2, 3, 2), 86),
  Sample(False, (1, 2, 2, 2, 4, 1), 87),
  Sample(False, (1, 2, 2, 2, 4, 2), 88),
