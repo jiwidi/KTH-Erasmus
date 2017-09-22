@@ -19,6 +19,10 @@ object Main {
         ctx = ctx.copy(outDir = Some(new File(out)))
         processOption(args)
 
+      case "--tokens" :: args =>
+        ctx = ctx.copy(doTokens = true)
+        processOption(args)
+
       case f :: args =>
         ctx = ctx.copy(file = Some(new File(f)))
         processOption(args)
@@ -45,8 +49,14 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args)
+    
+    var iter = Lexer.run(ctx.file.get)(ctx)
 
-    // TODO: run lexer phase
+    while(iter.hasNext) {
+      var token = iter.next
+      if (ctx.doTokens) {
+        println(token)
+      }
+    }
   }
-
 }
