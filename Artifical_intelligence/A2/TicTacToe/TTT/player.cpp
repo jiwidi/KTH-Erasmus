@@ -11,23 +11,23 @@ int minimax(const GameState &pState, uint8_t Player)
 {
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
-    if(pState.isEOG()){
+    if(pState.isEOG() || lNextStates.size()==0){
         if(Player==CELL_X && pState.isXWin()){
             return 1;
         }
         else if(Player==CELL_O && pState.isOWin()){
             return 1;
         }
-        else if(pState.isDraw()){
-            return 0;
-        }
+        // else if(pState.isDraw()){
+        //     return 0;
+        // }
         else{
             return -1;
         }
     }
-    //std::cerr << "Calculating minimax \n";
     else 
     {
+        std::cerr << "Calculating minimax \n";
         if (Player==CELL_O)
         {
             int bestPossible = -99999;
@@ -48,6 +48,7 @@ int minimax(const GameState &pState, uint8_t Player)
             }
             return bestPossible;
         }
+        return 0;
     }
 
 }
@@ -83,6 +84,18 @@ int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Playe
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
     if(depth==0 || pState.isEOG()){
+        if(Player==CELL_X && pState.isXWin()){
+            return 1;
+        }
+        else if(Player==CELL_O && pState.isOWin()){
+            return 1;
+        }
+        // else if(pState.isDraw()){
+        //     return 0;
+        // }
+        else{
+            return -1;
+        }
         return evalBoard(pState,Player);
     }
     else if (Player==CELL_O)
