@@ -12,10 +12,10 @@ int minimax(const GameState &pState, uint8_t Player)
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
     if(pState.isEOG()){
-        if(Player=='X' && pState.isXWin()){
+        if(Player==CELL_X && pState.isXWin()){
             return 1;
         }
-        else if(Player=='O' && pState.isOWin()){
+        else if(Player==CELL_O && pState.isOWin()){
             return 1;
         }
         else if(pState.isDraw()){
@@ -28,11 +28,11 @@ int minimax(const GameState &pState, uint8_t Player)
     //std::cerr << "Calculating minimax \n";
     else 
     {
-        if (Player=='O')
+        if (Player==CELL_O)
         {
             int bestPossible = -99999;
             for(int i=0;i<lNextStates.size();i++){
-                int v=minimax(lNextStates[i],'O');
+                int v=minimax(lNextStates[i],CELL_O);
                 bestPossible=std::max(bestPossible,v);
                 
             }
@@ -42,7 +42,7 @@ int minimax(const GameState &pState, uint8_t Player)
         {
             int bestPossible = 99999;
             for(int i=0;i<lNextStates.size();i++){
-                int v=minimax(lNextStates[i],'X');
+                int v=minimax(lNextStates[i],CELL_X);
                 bestPossible=std::min(bestPossible,v);
                 
             }
