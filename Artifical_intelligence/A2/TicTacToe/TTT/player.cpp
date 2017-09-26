@@ -4,10 +4,10 @@
 namespace TICTACTOE
 {
 
-bool Player::terminal(const GameState &pState){
+bool terminal(const GameState &pState){
     return true;
 }
-int Player::minimax(const GameState &pState, uint8_t Player)
+int minimax(const GameState &pState, uint8_t Player)
 {
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
@@ -52,7 +52,7 @@ int Player::minimax(const GameState &pState, uint8_t Player)
 
 }
 
-int Player::evalBoard(const GameState &pState,uint8_t Player){
+int evalBoard(const GameState &pState,uint8_t Player){
     int val;
     if(Player==CELL_X){
         for(int i=0;i<16;i++){
@@ -77,7 +77,7 @@ int Player::evalBoard(const GameState &pState,uint8_t Player){
         return 1;
     }
 }
-int Player::alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Player)
+int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Player)
 {
     
     std::vector<GameState> lNextStates;
