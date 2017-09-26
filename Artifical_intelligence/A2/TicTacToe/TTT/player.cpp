@@ -135,10 +135,10 @@ GameState Player::play(const GameState &pState,const Deadline &pDue)
     GameState move=lNextStates[rand() % lNextStates.size()];
     int v=0;
     for(int i=0;i<lNextStates.size();i++){
-        if(alphabeta(lNextStates[i],1000,-999999,999999,Player)>v){
+        if(alphabeta(lNextStates[i],10,-999999,999999,Player)>v){
             std::cerr << "evaluando";
             move=lNextStates[i];
-            v=alphabeta(lNextStates[i],1000,-999999,999999,Player);
+            v=alphabeta(lNextStates[i],10,-999999,999999,Player);
         }
 
     }
