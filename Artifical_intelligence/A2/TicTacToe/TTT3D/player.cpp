@@ -110,8 +110,9 @@ const int Heuristic_Array[5][5] = {
       
 int evaluatePosition(GameState pState, uint8_t player) {
     //uint8_t opponent = (player == CELL_O) ? CELL_O : CELL_X, piece;
+    return 1;
     int players, others, t = 0, i, j;
-    for (i = 0; i < 68; i++)  {
+    for (i = 0; i < 76; i++)  {
         players = others = 0;
         for (j = 0; j < 4; j++)  {
             if (pState.at(poss[i][j])&CELL_O){
@@ -179,8 +180,8 @@ GameState Player::play(const GameState &pState,const Deadline &pDue)
     int aux;
     if(!pState.isBOG()){
         for(int i=0;i<lNextStates.size();i++){
-            //aux=alphabeta(lNextStates[i],1,alpha,beta,Player);
-            aux=evaluatePosition(lNextStates[i],Player);
+            aux=alphabeta(lNextStates[i],1,alpha,beta,Player);
+            //aux=evaluatePosition(lNextStates[i],Player);
             if(aux>v){
                 move=lNextStates[i];
                 v=aux;
