@@ -6,9 +6,6 @@
 namespace TICTACTOE
 {
 
-bool terminal(const GameState &pState){
-    return true;
-}
 int minimax(const GameState &pState, uint8_t Player)
 {
     std::vector<GameState> lNextStates;
@@ -54,10 +51,17 @@ int minimax(const GameState &pState, uint8_t Player)
     }
 
 }
+const int Heuristic_Array[5][5] = {
+    {     0,   -10,  -100, -1000 , -100000000},
+    {    10,     0,     0,     0 ,      0},
+    {   100,     0,     0,     0 ,      0},
+    {  1000,     0,     0,     0 ,      0},
+    { 100000000,     0,     0,     0 ,      0}
+};
 
-int evalBoard(const GameState &pState,uint8_t Player){
-
-    int poss[12][4]={
+int evaluatePosition(GameState pState, uint8_t player) {
+    //uint8_t opponent = (player == CELL_O) ? CELL_O : CELL_X, piece;
+    int poss[10][4]={
         {0,1,2,3},
         {4,5,6,7},
         {8,9,10,11},
@@ -68,49 +72,30 @@ int evalBoard(const GameState &pState,uint8_t Player){
         {3,7,11,15},
         {0,5,10,15},
         {3,6,9,12}
-    };
-    int val=10;
-    if(Player==CELL_X){
-        for(int i=0;i<10;i++){
-            for (int j=0;j<4;j++){
-                if(pState.at(poss[i][j])&CELL_O){
-                    val-=1;
-                    break;
-                }
+    }; 
+    int players, others, t = 0, i, j;
+    for (i = 0; i < 10; i++)  {
+        players = others = 0;
+        for (j = 0; j < 4; j++)  {
+            if (pState.at(poss[i][j])&CELL_O){
+                others++;
+            }
+            else if(pState.at(poss[i][j])&CELL_X){
+                players++;
             }
         }
+        t += Heuristic_Array[players][others];
     }
-    else if(Player==CELL_O){
-        for(int i=0;i<10;i++){
-            for (int j=0;j<4;j++){
-                if(pState.at(poss[i][j])&CELL_X){
-                    val-=1;
-                    break;
-                }
-            }
-        }
-    }
-    return val;
+    return t;
 }
 int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Player)
 {
     int v=0;
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
-    if(depth==0 || lNextStates.size()==0){
-        v=evalBoard(pState,Player);
-        // if(Player==CELL_X && pState.isXWin()){
-        //     v= 1;
-        // }
-        // else if(Player==CELL_O && pState.isOWin()){
-        //     v= 1;
-        // }
-        // // else if(pState.isDraw()){
-        // //      return 0;
-        // // }
-        // else{
-        //     v= -1;
-        // }
+    if(depth==0 || lNextStates.size()==0 || pState.isEOG()){
+        v=evaluatePosition(pState,Player);
+
     }
     else if (Player==CELL_O)
     {
@@ -125,7 +110,7 @@ int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Playe
 
         }
     }
-    else
+    else if (Player==CELL_X)
     {
         v=std::numeric_limits<int>::max();
         for (int i=0;i<lNextStates.size();i++)
@@ -143,31 +128,27 @@ int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Playe
 GameState Player::play(const GameState &pState,const Deadline &pDue)
 {
     srand( time( NULL ) );
-    std::cerr << "Processing " << pState.toMessage() << std::endl;
-    auto Player=pState.getNextPlayer();
-    if(Player==CELL_O){
-        std::cerr << "soy o \n";
-    }
-    if(Player==CELL_X){
-        std::cerr << "soy x \n";
-    }
+    uint8_t Player=pState.getNextPlayer();
     std::vector<GameState> lNextStates;
     pState.findPossibleMoves(lNextStates);
-    GameState move=lNextStates[rand() % lNextStates.size()];
-    int v=-999999;
-    int aux;
+
+    GameState move;
+    int v=-std::numeric_limits<int>::max();
     int alpha=-std::numeric_limits<int>::max();
     int beta=std::numeric_limits<int>::max();
+    int aux;
     if(!pState.isBOG()){
         for(int i=0;i<lNextStates.size();i++){
-            aux=alphabeta(lNextStates[i],100,alpha,beta,Player);
+            aux=alphabeta(lNextStates[i],4,alpha,beta,Player);
             if(aux>v){
-                std::cerr << "evaluando";
                 move=lNextStates[i];
                 v=aux;
             }
 
         }
+    }
+    else{
+        move=lNextStates[rand() % lNextStates.size()];
     }
     //alphabeta(lNextStates[i],50,9999,9999,'X') minimax(lNextStates[i],'X')
     //if (lNextStates.size() == 0) return GameState(pState, Move());
