@@ -1,3 +1,9 @@
+/* Player.cpp - Assignment 1 AI
+ * Julia Guerrero Viu && Jaime Ferrando Huertas
+ * September 2017
+ */
+
+
 #include "Player.hpp"
 #include <cstdlib>
 #include <iostream>
@@ -5,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include "HMM.hpp"
+#include <ctime>
 
 namespace ducks
 {
@@ -13,33 +20,35 @@ Player::Player()
 {
 }
 
+/* constants */
+
 const int numst = 1;
 const int numsts = 5;
 const int numobs = 9;
 const int numSpecies = 6;
 const int maxNumBirds = 20;
-/* shooting */
-const double confidenceShoot = 0.7;
 
+const int notaccurate=6;
+const int accurate=5;
+
+/* shooting */
 std::vector<HMM> shootingHmm;
 
-// confidence on each model will depend on lastPrediction
+/* confidence on each model will depend on lastPrediction */
+const double confidenceShoot = 0.5;
 std::vector<int> lastPrediction(maxNumBirds,-1);
 std::vector<int> confidence;
-
-int lastShootingBird=-1;
+/* keep the birds that we won't shoot again because are already hit */
 std::vector<bool> birdAlive;
 
-int total;
-int correct;
-
 /* guessing */
-double ratio;
-
 std::vector<std::vector<HMM>> model(numSpecies);
 
-/* information for statistics */
+/* information for statistics and ratios */
 std::vector<ESpecies> lastGuess;
+int total;
+int correct;
+double ratio;
 
 
 // --------------- Auxiliary functions ------------------
@@ -121,7 +130,7 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
      */
     int round = pState.getRound();
     size_t numberBirds = pState.getNumBirds();
-    int boundary = 85 - numberBirds;
+    int boundary = 95 - numberBirds;
 
     int timestep=(pState.getBird(0)).getSeqLength();
 
@@ -134,12 +143,12 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
         correct=0;
         return cDontShoot;
     }
-    // first we wait for some information (3 rounds to detect Black_storks correctly)
-    else if(timestep < boundary || pState.getRound()<=2){
+    
+    else if(timestep < boundary || (pState.getRound()<=notaccurate && pState.getRound()>accurate)){
         return cDontShoot;        
     }
     
-    // in timestep 79 we train the hmm of each bird
+    // in first timestep after boundary we train the hmm of each bird
     else if(timestep == boundary){
         for(int i=0; i<numberBirds; i++){
             birdAlive.push_back(true);
@@ -159,7 +168,7 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
         return cDontShoot;
     }
     
-    // we calculate the most likely next movement of each bird and its probability
+    // after that, in every next timestep we calculate the most likely next movement of each bird and its probability
     else{
 
         std::vector<std::tuple <int,double>> probShootBird;
@@ -172,16 +181,19 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
                     obsBird.push_back(crB.getObservation(j));
                 }
             }
-            if(timestep%3==0){// we train the model again every three timesteps
-                shootingHmm[i].hmm3(obsBird);
-            }
+            
             tuple<int,double> nextMove = shootingHmm[i].nextObs(obsBird);
+            // we train the model again every timestep
+            shootingHmm[i].hmm3(obsBird);
             
             // if 3 lastPredictions were correct we can shoot, if not we can't (probability = 0)
             if(lastPrediction[i]==obsBird[obsBird.size()-1]){
                 confidence[i]++;
             }
-            if(confidence[i]<3 || lastPrediction[i]!=obsBird[obsBird.size()-1]){
+            else{
+                confidence[i]=0;            
+            }
+            if(confidence[i]<4 || lastPrediction[i]!=obsBird[obsBird.size()-1]){
                 tuple<int,double>aux((get<0>(nextMove)),0);
                 nextMove=aux;
             }
@@ -202,8 +214,8 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
             auto it= std::max_element(probs.begin(),probs.end());
             int specie = std::distance(probs.begin(),it);
             
-            // if we suspect it is a Black_stork we don't shoot in all the round
-            if(specie==5){
+            // if we suspect it is a Black_stork we don't shoot in all the round (probability=0)
+            if(specie==5 || pState.getRound()==numobs){
                 tuple<int,double>aux((get<0>(nextMove)),0);
                 nextMove=aux;
                 birdAlive[i] = false;
@@ -217,7 +229,7 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
         tuple<int,double> goalBird = probShootBird[0];
         int goalBirdNumber=0;
         for(int i=1; i<numberBirds; i++){
-            if(get<1>(probShootBird[i]) > get<1>(goalBird) && lastShootingBird!=i && birdAlive[i]){
+            if(get<1>(probShootBird[i]) > get<1>(goalBird) && birdAlive[i]){
                 goalBird=probShootBird[i];
                 goalBirdNumber = i;        
             }
@@ -228,7 +240,6 @@ Action Player::shoot(const GameState &pState, const Deadline &pDue)
 
         if(get<1>(goalBird) > confidenceShoot){
             cerr << "Shoot at bird " << goalBirdNumber << " with movement " << get<0>(goalBird) <<  "in timestep " << timestep << endl;
-            lastShootingBird = goalBirdNumber;
             total++;
             return Action(goalBirdNumber,getNextMovement(get<0>(goalBird)));
         }
@@ -251,10 +262,10 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
      */
     std::vector<ESpecies> lGuesses(pState.getNumBirds(), SPECIES_UNKNOWN);
 
-    // in the first round, just try to guess all of the birds randomly    
+    // in the first round, just try to guess all of the birds as if they were one specie (pigeon for example)
     if (pState.getRound() == 0){
         for(int i=0; i<pState.getNumBirds();i++){
-            lGuesses[i] = SPECIES_RAVEN;
+              lGuesses[i] = SPECIES_PIGEON;
         }
     }
     
@@ -286,9 +297,7 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
             auto it= std::max_element(probs.begin(),probs.end());
             int specie = std::distance(probs.begin(),it);
             
-            if(pState.getRound()<4 || ratio>0.7){
-                lGuesses[i] = getSpecie(specie);
-            }
+            lGuesses[i] = getSpecie(specie);
         }
     }
     
@@ -296,7 +305,7 @@ std::vector<ESpecies> Player::guess(const GameState &pState, const Deadline &pDu
     // keep my last guess to calculate the ratio of correct answers
     lastGuess = lGuesses;
 
-    cerr << "Ratio shooting: " << correct/(double)total << endl;     
+    cerr << "Ratio shooting: " << correct/(double)total << endl;
 
     cerr << "MY GUESSES" << endl;
     for(int i=0; i<pState.getNumBirds(); i++){
@@ -313,6 +322,7 @@ void Player::hit(const GameState &pState, int pBird, const Deadline &pDue)
      * If you hit the bird you are trying to shoot, you will be notified through this function.
      */
     std::cerr << "HIT BIRD!!!" << std::endl;
+    // if we hit a bird, we don't want to shoot at it anymore
     birdAlive[pBird] = false;
     correct++;
     
@@ -330,12 +340,12 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
 
     cerr << "REAL BIRDS" << endl;
     for(int i=0; i<pState.getNumBirds(); i++){
-        cerr << pSpecies[i] << " ";    
+        cerr << pSpecies[i] << " ";   
     } 
     cerr << endl;
     
     //train the models with all the birds from that specie
-    for (int i=0; i<pSpecies.size() && pDue.remainingMs()>150; i++){
+    for (int i=0; i<pSpecies.size(); i++){
         ESpecies crS = pSpecies[i];
         if (crS != SPECIES_UNKNOWN){
             // create a new model for the bird
@@ -352,9 +362,6 @@ void Player::reveal(const GameState &pState, const std::vector<ESpecies> &pSpeci
             // train the model and keep it in the specie that corresponds
             newmodel.hmm3(obsBird);
             model[crS].push_back(newmodel);
-//            if(ratio >= 0.8){
-//                model[crS].push_back(newmodel);
-//            }
         }
     }
 

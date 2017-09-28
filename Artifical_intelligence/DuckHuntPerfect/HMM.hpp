@@ -30,6 +30,10 @@ public:
 
     int getobs() const;
 
+    Matrix getA() const;
+    
+    Matrix getB() const;
+
     // return the probability of the observation sequence
     double hmm1(const vector<int>& obs) const;
 
@@ -50,11 +54,12 @@ public:
 
     string print();
     
+    // Calculates the last most likely state (time t) using Viterbi algorithm
     int calculateState(const vector<int>& obs);
 
-    tuple<int,double> nextObservation(const vector<int>& obs);
-
+    // Calculates the most probable movement in timestep t+1 given the observations 1-t in vector obs
     tuple<int,double> nextObs(const vector<int>& obs);
+
 };
 
 #endif
