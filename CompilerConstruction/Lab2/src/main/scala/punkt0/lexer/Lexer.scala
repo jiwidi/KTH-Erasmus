@@ -10,15 +10,19 @@ object Lexer extends Phase[File, Iterator[Token]] {
   def run(f: File)(ctx: Context): Iterator[Token] = {
     val source = scala.io.Source.fromFile(f)
 
-    // TODO: implement this method
-
     new Iterator[Token] {
-      var current = source.next
+      var pos = "(" + Positioned.lineOf(source.pos) +":" + Positioned.columnOf(source.pos) + ")"
 
+      var token = new Token(BAD)
+
+      var current = source.next
+      
       var keywords = List("object" ,"class" ,"def" ,"override" ,"var" ,"Unit" ,"String" ,"extends" ,"Int" ,"Boolean" ,"while" ,"if" ,"else" ,"true" ,"false" ,"this" ,"null" ,"new" ,"println")
 
+      var eofleft = true
+
       def hasNext = {
-        source.hasNext
+        eofleft
       }
 
       def next = {
@@ -32,6 +36,7 @@ object Lexer extends Phase[File, Iterator[Token]] {
             nextChar
           }
           if (current=='/') {
+            pos = "(" + Positioned.lineOf(source.pos) +":" + Positioned.columnOf(source.pos) + ")"
             nextChar
             if (current=='/') {
               done = false
@@ -63,13 +68,91 @@ object Lexer extends Phase[File, Iterator[Token]] {
             }
           }
         }
+        if (!division) {
+          pos = "(" + Positioned.lineOf(source.pos) +":" + Positioned.columnOf(source.pos) + ")"
+        }
         if (current == '\u0000') {
-          new Token(EOF)
+          eofleft = false
+          token = new Token(EOF)
         } else if (division) {
-          new Token(DIV)
+          token = new Token(DIV)
+        } else if (current==':') {
+          nextChar
+          token = new Token(COLON)
+        } else if (current==';') {
+          nextChar
+          token = new Token(SEMICOLON)
+        } else if (current=='.') {
+          nextChar
+          token = new Token(DOT)
+        } else if (current==',') {
+          nextChar
+          token = new Token(COMMA)
+        } else if (current=='=') {
+          nextChar
+          if (current=='=') {
+            nextChar
+            token = new Token(EQUALS)
+          } else {
+            token = new Token(EQSIGN)
+          }
+        } else if (current=='!') {
+          nextChar
+          token = new Token(BANG)
+        } else if (current=='(') {
+          nextChar
+          token = new Token(LPAREN)
+        } else if (current==')') {
+          nextChar
+          token = new Token(RPAREN)
+        } else if (current=='{') {
+          nextChar
+          token = new Token(LBRACE)
+        } else if (current=='}') {
+          nextChar
+          token = new Token(RBRACE)
+        } else if (current=='&') {
+          nextChar
+          if (current=='&') {
+            token = new Token(AND)
+          } else {
+            token = new Token(BAD)
+          }
+        } else if (current=='|') {
+          nextChar
+          if (current=='|') {
+            token = new Token(OR)
+          } else {
+            token = new Token(BAD)
+          }
+        } else if (current=='<') {
+          nextChar
+          token = new Token(LESSTHAN)
+        } else if (current=='+') {
+          nextChar
+          token = new Token(PLUS)
+        } else if (current=='-') {
+          nextChar
+          token = new Token(MINUS)
+        } else if (current=='*') {
+          nextChar
+          token = new Token(TIMES)
+        } else if (current=='"') {
+          var currstr = new StringBuffer
+          nextChar
+          while (current!='"' && current!='\u0000') {
+            currstr.append(current)
+            nextChar
+          }
+          if (current=='"') {
+            nextChar
+            token = new STRLIT(currstr.toString)
+          } else {
+            token = new Token(BAD)
+          }
         } else if (isLetter) {
           var currstr = new StringBuffer
-          while (isLetter || isDigit) {
+          while (isLetter || isDigit || current=='_') {
             currstr.append(current)
             nextChar
           }
@@ -77,65 +160,64 @@ object Lexer extends Phase[File, Iterator[Token]] {
             currstr.toString match {
               case "object" =>
                 nextChar
-                new Token(OBJECT)
+                token = new Token(OBJECT)
               case "class" =>
                 nextChar
-                new Token(CLASS)
+                token = new Token(CLASS)
               case "def" =>
                 nextChar
-                new Token(DEF)
+                token = new Token(DEF)
               case "override" =>
                 nextChar
-                new Token(OVERRIDE)
+                token = new Token(OVERRIDE)
               case "var" =>
                 nextChar
-                new Token(VAR)
+                token = new Token(VAR)
               case "Unit" =>
                 nextChar
-                new Token(UNIT)
+                token = new Token(UNIT)
               case "String" =>
                 nextChar
-                new Token(STRING)
+                token = new Token(STRING)
               case "extends" =>
                 nextChar
-                new Token(EXTENDS)
+                token = new Token(EXTENDS)
               case "Int" =>
                 nextChar
-                new Token(INT)
+                token = new Token(INT)
               case "Boolean" =>
                 nextChar
-                new Token(BOOLEAN)
+                token = new Token(BOOLEAN)
               case "while" =>
                 nextChar
-                new Token(WHILE)
+                token = new Token(WHILE)
               case "if" =>
                 nextChar
-                new Token(IF)
+                token = new Token(IF)
               case "else" =>
                 nextChar
-                new Token(ELSE)
+                token = new Token(ELSE)
               case "true" =>
                 nextChar
-                new Token(TRUE)
+                token = new Token(TRUE)
               case "false" =>
                 nextChar
-                new Token(FALSE)
+                token = new Token(FALSE)
               case "this" =>
                 nextChar
-                new Token(THIS)
+                token = new Token(THIS)
               case "null" =>
                 nextChar
-                new Token(NULL)
+                token = new Token(NULL)
               case "new" =>
                 nextChar
-                new Token(NEW)
+                token = new Token(NEW)
               case "println" =>
                 nextChar
-                new Token(PRINTLN)
+                token = new Token(PRINTLN)
             }
           } else {
-            nextChar
-            new ID(currstr.toString)
+            token = new ID(currstr.toString)
           }
         } else if (isDigit) {
           var value = 0
@@ -147,14 +229,18 @@ object Lexer extends Phase[File, Iterator[Token]] {
             while (isDigit || isLetter) {
               nextChar
             }
-            new Token(BAD)
+            token = new Token(BAD)
           } else {
-            new INTLIT(value)
+            token = new INTLIT(value)
           }
         } else {
           nextChar
-          new Token(BAD)
+          token = new Token(BAD)
         }
+        if (ctx.doTokens) {
+          println(token + pos)
+        }
+        token
       }
 
       def isDigit = {
