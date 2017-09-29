@@ -54,9 +54,6 @@ object Main {
 
     while(iter.hasNext) {
       var token = iter.next
-      if (ctx.doTokens) {
-        println(token)
-      }
     }
   }
 }

@@ -1,0 +1,7 @@
+identifier = "test"
+variable3 = 1000
+ident = 1 + 2
+more=6/2
+more+data
+data= 123 * 5
+data == more
