@@ -3,6 +3,7 @@ package punkt0
 import java.io.File
 
 import lexer._
+import ast._
 
 
 object Main {
@@ -21,6 +22,14 @@ object Main {
 
       case "--tokens" :: args =>
         ctx = ctx.copy(doTokens = true)
+        processOption(args)
+
+      case "--ast" :: args =>
+        ctx = ctx.copy(doAST = true)
+        processOption(args)
+
+      case "--print" :: args =>
+        ctx = ctx.copy(doPrintMain = true)
         processOption(args)
 
       case f :: args =>
@@ -52,8 +61,6 @@ object Main {
     
     var iter = Lexer.run(ctx.file.get)(ctx)
 
-    while(iter.hasNext) {
-      var token = iter.next
-    }
+    var parser = Parser.run(iter)(ctx)
   }
 }
