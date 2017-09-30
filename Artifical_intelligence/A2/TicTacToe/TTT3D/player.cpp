@@ -5,6 +5,7 @@
 #define Possible_Wins 40
 namespace TICTACTOE3D
 {
+int round=0;
 const int poss[76][4]={ //1st
         {0,1,2,3},
         {4,5,6,7},
@@ -110,7 +111,6 @@ const int Heuristic_Array[5][5] = {
       
 int evaluatePosition(GameState pState, uint8_t player) {
     //uint8_t opponent = (player == CELL_O) ? CELL_O : CELL_X, piece;
-    return 1;
     int players, others, t = 0, i, j;
     for (i = 0; i < 76; i++)  {
         players = others = 0;
@@ -130,13 +130,19 @@ int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Playe
 {
     int v=0;
     std::vector<GameState> lNextStates;
-    pState.findPossibleMoves(lNextStates);
-    if(depth==0 || lNextStates.size()==0 || pState.isEOG()){
+    if(pState.isXWin()){
+        return 1000000;
+    }
+    else if(pState.isOWin()){
+        return -10000000;
+    }
+    if(depth==0 || pState.isEOG()){
         v=evaluatePosition(pState,Player);
 
     }
     else if (Player==CELL_O)
     {
+        pState.findPossibleMoves(lNextStates);
         v=-(std::numeric_limits<int>::max());
         for (int i=0;i<lNextStates.size();i++)
         {
@@ -150,6 +156,7 @@ int alphabeta(const GameState &pState,int depth,int alpha,int beta,uint8_t Playe
     }
     else if (Player==CELL_X)
     {
+        pState.findPossibleMoves(lNextStates);
         v=std::numeric_limits<int>::max();
         for (int i=0;i<lNextStates.size();i++)
         {
@@ -179,13 +186,16 @@ GameState Player::play(const GameState &pState,const Deadline &pDue)
     int beta=std::numeric_limits<int>::max();
     int aux;
     if(!pState.isBOG()){
+        int depth=2;
+        int plus=2;
         for(int i=0;i<lNextStates.size();i++){
-            aux=alphabeta(lNextStates[i],1,alpha,beta,Player);
+            aux=alphabeta(lNextStates[i],depth,alpha,beta,Player);
             //aux=evaluatePosition(lNextStates[i],Player);
             if(aux>v){
                 move=lNextStates[i];
                 v=aux;
             }
+            i=i+plus+i%2;
 
         }
     }
@@ -199,7 +209,7 @@ GameState Player::play(const GameState &pState,const Deadline &pDue)
      * Here you should write your clever algorithms to get the best next move, ie the best
      * next state. This skeleton returns a random move instead.
      */
-
+    round+=1;
     return move;
 }
 
