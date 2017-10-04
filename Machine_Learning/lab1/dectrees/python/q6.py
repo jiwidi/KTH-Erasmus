@@ -83,7 +83,7 @@ for v in fraction:
                 if(performance>topPerformance):
                     keepPruning=True
                     topPerformance=performance
-                    monk1train=tree
+                    monk3train=tree
         valuesmonk3.append(d.check(monk3tree,monk3test))
     print("Monk3 fraction "+ str(v))
     mean=np.mean(valuesmonk3)
@@ -96,13 +96,13 @@ for v in fraction:
 trace1 = go.Scatter(
     x=fraction,
     y=monk1data,
-    name = '<b>Monk1 fraction error</b>', # Style name/legend entry with html tags
+    name = '<b>Monk1 </b>', # Style name/legend entry with html tags
     connectgaps=False
 )
 trace2 = go.Scatter(
     x=fraction,
     y=monk3data,
-    name = '<b>Monk3 fraction error</b>', # Style name/legend entry with html tags
+    name = '<b>Monk3 </b>', # Style name/legend entry with html tags
     connectgaps=False
 )
 trace1s = go.Scatter(
@@ -130,10 +130,15 @@ trace3 = go.Scatter(
     fillcolor='rgba(0,100,80,0.2)',
     connectgaps=True
 )
-data =[trace1,trace2,trace1s,trace3s]
-fig = dict(data=data)
+data =[trace4,trace3]
+# Edit the layout
+layout = dict(title = 'Effect of different prunings fractions in monk1 and monk3',
+              xaxis = dict(title = 'Fraction between train and test'),
+              yaxis = dict(title = 'Variance'),
+              )
 
-plotly.plotly.iplot(fig, filename='Q7 ML lab1 with err ')
+fig = dict(data=data, layout=layout)
+plotly.plotly.iplot(fig, filename='Q7 ML lab1 Variance ')
 
 
 
