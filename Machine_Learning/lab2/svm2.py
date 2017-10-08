@@ -16,11 +16,10 @@ C = 20
 
 
 def genDatapoints():
-    classA = [(random.normalvariate(-2.5, 1.0), random.normalvariate(1.6, 0.8), 1.0)
-                for i in range(5)] + [(random.normalvariate(2.5, 0.8), 
-                random.normalvariate(2.0, 1.5), 1.0) for i in range(5)]
-    classB = [(random.normalvariate(0.0, 1.0), random.normalvariate(-1.2, 1.4), -1.0)
-                for i in range(10)]
+    numpy.random.seed(100)
+    classA = [(random.normalvariate(-1.5, 1.0), random.normalvariate(0.5, 1.0), 1.0) for i in range(5)] + \
+             [(random.normalvariate(1.5, 1.0), random.normalvariate(0.5, 1.0), 1.0) for i in range(5)]
+    classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), 1.0) for i in range(10)]
     data = classA + classB
     random.shuffle(data)
     return data,classA,classB
