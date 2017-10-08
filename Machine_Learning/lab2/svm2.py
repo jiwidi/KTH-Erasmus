@@ -55,6 +55,7 @@ def kernel(x, y, kernel_trick):
         return sigmoid_kernel(x, y)
     else:
         return 0
+
 def P(datapoints, kernel_trick):
     N = len(datapoints)
     P = numpy.empty(shape = (N, N))
@@ -82,6 +83,7 @@ def getAlpha(P, q, G, h):
     r = qp(matrix(P), matrix(q), matrix(G), matrix(h))
     alpha = list(r['x'])
     return alpha   
+
 def removeZ(datapoints,alpha):
     result = []
     for v1,v2 in zip(alpha, datapoints):
@@ -89,15 +91,15 @@ def removeZ(datapoints,alpha):
             result.append((v1,v2))
     return result
 
-def train(datapoints,kernel_trick):
+def getSupportVectors(datapoints,kernel_trick):
     n=len(datapoints)
     alpha=getAlpha(P(datapoints,kernel_trick),q(n),G(n),h(n))
     return removeZ(datapoints,alpha)
 
 #Train its the result of removeZ
-def indicator(train, x, y, kernel_trick):
+def indicator(supportVectors, x, y, kernel_trick):
     sum = 0
-    for alpha, datapoint in train:
+    for alpha, datapoint in supportVectors:
         sum += alpha*datapoint[2]*kernel((x, y), datapoint[0:2],kernel_trick)
     return sum
 
@@ -130,7 +132,7 @@ def main():
                     [p[1] for p in classB],
                     'ro')
 
-        t= train(datapoints, k)
+        t= getSupportVectors(datapoints, k)
 
         # Plot the decision boundaries.
         xr=numpy.arange(-4, 4, 0.05)
