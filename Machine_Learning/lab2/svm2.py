@@ -1,6 +1,6 @@
 from cvxopt.solvers import qp
 from cvxopt.base import matrix
-import numpy, pylab, random, math
+import numpy, pylab, random, math, sys
 
 LINEAR = 0
 POLYNOMIAL = 1
@@ -13,16 +13,26 @@ DELTA = 0.1
 K = 0.05
 C = 20
 
-
-
+random.seed(100)
 def genDatapoints():
-    numpy.random.seed(100)
-    classA = [(random.normalvariate(-1.5, 1.0), random.normalvariate(0.5, 1.0), 1.0) for i in range(5)] + \
-             [(random.normalvariate(1.5, 1.0), random.normalvariate(0.5, 1.0), 1.0) for i in range(5)]
-    classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), 1.0) for i in range(10)]
+    classA = [(random.normalvariate(-1.5, 1.0), random.normalvariate(0.5, 1.0), 1.0)
+              for i in range(5)] + [(random.normalvariate(1.5, 1),
+                                     random.normalvariate(0.5, 1.0), 1.0) for i in range(5)]
+    classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), -1.0)
+              for i in range(10)]
     data = classA + classB
     random.shuffle(data)
     return data,classA,classB
+
+#def genDatapoints2():
+#    classA = [(random.normalvariate(-2.5, 1.0), random.normalvariate(1.6, 0.8), 1.0)
+#                for i in range(5)] + [(random.normalvariate(2.5, 0.8),
+#                random.normalvariate(2.0, 1.5), 1.0) for i in range(5)]
+#    classB = [(random.normalvariate(0.0, 1.0), random.normalvariate(-1.2, 1.4), -1.0)
+#                for i in range(10)]
+#    data = classA + classB
+#    random.shuffle(data)
+#    return data,classA,classB
 
 # Linear kernel trick. Can only produce a linear boundary.
 def linear_kernel(x, y):
@@ -66,18 +76,31 @@ def P(datapoints, kernel_trick):
 def q(n):
     return [-1.0 for i in range(n)]
 
-def h(n):
-    h = numpy.zeros(shape = (2*n))
-    for i in range(n):
-        h[i+n] = C
-    return h
+def h(n,slack):
+    if(slack):
+        h = numpy.zeros(shape = (2*n))
+        for i in range(n):
+            h[i+n] = C
+        return h
+    else:
+        h = numpy.zeros(shape=(n))
+        for i in range(n):
+            h[i] = 0
+        return h
 
-def G(n):
-    mat = numpy.zeros(shape = (2*n, n))
-    for i in range(n):
-        mat[i][i] = -1
-        mat[i+n][i] = 1
-    return mat
+
+def G(n,slack):
+    if(slack):
+        mat = numpy.zeros(shape = (2*n, n))
+        for i in range(n):
+            mat[i][i] = -1
+            mat[i+n][i] = 1
+        return mat
+    else:
+        mat = numpy.zeros(shape=(n, n))
+        for i in range(n):
+            mat[i][i] = -1
+        return mat
 def getAlpha(P, q, G, h):
     r = qp(matrix(P), matrix(q), matrix(G), matrix(h))
     alpha = list(r['x'])
@@ -90,9 +113,9 @@ def removeZ(datapoints,alpha):
             result.append((v1,v2))
     return result
 
-def getSupportVectors(datapoints,kernel_trick):
+def getSupportVectors(datapoints,kernel_trick,slack):
     n=len(datapoints)
-    alpha=getAlpha(P(datapoints,kernel_trick),q(n),G(n),h(n))
+    alpha=getAlpha(P(datapoints,kernel_trick),q(n),G(n,slack),h(n,slack))
     return removeZ(datapoints,alpha)
 
 #Train its the result of removeZ
@@ -116,7 +139,8 @@ def kernel_name(kernel_trick):
 
 
 def main():
-    
+    slack=sys.argv[1]=='True'
+    print(slack)
     # Generate the datapoints and plot them.
     datapoints,classA, classB = genDatapoints()
 
@@ -131,7 +155,7 @@ def main():
                     [p[1] for p in classB],
                     'ro')
 
-        t= getSupportVectors(datapoints, k)
+        t= getSupportVectors(datapoints, k,slack)
 
         # Plot the decision boundaries.
         xr=numpy.arange(-4, 4, 0.05)
