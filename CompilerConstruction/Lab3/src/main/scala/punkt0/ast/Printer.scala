@@ -30,6 +30,6 @@ object Printer {
     progstr.toString
   }
   def indent(s: String) = {
-    "  " + s.replace("\n", "  \n")
+    "  " + s.replace("\n", "\n  ")
   }
 }

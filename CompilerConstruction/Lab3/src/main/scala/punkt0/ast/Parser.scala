@@ -90,6 +90,13 @@ object Parser extends Phase[Iterator[Token], Program] {
       }
       eat(LBRACE)
       var vars = new ListBuffer[VarDecl]
+      //while (currentToken.kind == VAR) {
+      //  eat(VAR)
+      //  var id = expect(IDKIND).toString
+      //  eat(COLON)
+      //  if 
+      //  vars.append(Vardecl(type, id ,expr)
+      //}
       var methods = new ListBuffer[MethodDecl]
       // Temp skip, removes everything until matching brace
       var depth = 0
