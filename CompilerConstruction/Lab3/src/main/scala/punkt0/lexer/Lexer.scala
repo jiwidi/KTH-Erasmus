@@ -17,7 +17,9 @@ object Lexer extends Phase[File, Iterator[Token]] {
 
       var current = source.next
       
-      var keywords = List("object" ,"class" ,"def" ,"override" ,"var" ,"Unit" ,"String" ,"extends" ,"Int" ,"Boolean" ,"while" ,"if" ,"else" ,"true" ,"false" ,"this" ,"null" ,"new" ,"println")
+      var keywords = Map(("object", new Token(OBJECT)), ("class", new Token(CLASS)), ("def", new Token(DEF)), ("override", new Token(OVERRIDE)), ("var", new Token(VAR)), ("Unit", new Token(UNIT)), ("String", new Token(STRING)), ("extends", new Token(EXTENDS)), ("Int", new Token(INT)), ("Boolean", new Token(BOOLEAN)), ("while", new Token(WHILE)), ("if", new Token(IF)), ("else", new Token(ELSE)), ("true", new Token(TRUE)), ("false", new Token(FALSE)), ("this", new Token(THIS)), ("null", new Token(NULL)), ("new", new Token(NEW)), ("println", new Token(PRINTLN)))
+
+      var simpletokens = Map((':', new Token(COLON)), (';', new Token(SEMICOLON)), ('.', new Token(DOT)), (',', new Token(COMMA)), ('!', new Token(BANG)), ('(', new Token(LPAREN)), (')', new Token(RPAREN)), ('{', new Token(LBRACE)), ('}', new Token(RBRACE)), ('<', new Token(LESSTHAN)), ('+', new Token(PLUS)), ('-', new Token(MINUS)), ('*', new Token(TIMES)))
 
       var eofleft = true
 
@@ -76,41 +78,17 @@ object Lexer extends Phase[File, Iterator[Token]] {
           token = new Token(EOF)
         } else if (division) {
           token = new Token(DIV)
-        } else if (current==':') {
+        } else if (simpletokens contains current) {
+          token = simpletokens(current)
           nextChar
-          token = new Token(COLON)
-        } else if (current==';') {
-          nextChar
-          token = new Token(SEMICOLON)
-        } else if (current=='.') {
-          nextChar
-          token = new Token(DOT)
-        } else if (current==',') {
-          nextChar
-          token = new Token(COMMA)
         } else if (current=='=') {
           nextChar
           if (current=='=') {
-            nextChar
             token = new Token(EQUALS)
+            nextChar
           } else {
             token = new Token(EQSIGN)
           }
-        } else if (current=='!') {
-          nextChar
-          token = new Token(BANG)
-        } else if (current=='(') {
-          nextChar
-          token = new Token(LPAREN)
-        } else if (current==')') {
-          nextChar
-          token = new Token(RPAREN)
-        } else if (current=='{') {
-          nextChar
-          token = new Token(LBRACE)
-        } else if (current=='}') {
-          nextChar
-          token = new Token(RBRACE)
         } else if (current=='&') {
           nextChar
           if (current=='&') {
@@ -125,18 +103,6 @@ object Lexer extends Phase[File, Iterator[Token]] {
           } else {
             token = new Token(BAD)
           }
-        } else if (current=='<') {
-          nextChar
-          token = new Token(LESSTHAN)
-        } else if (current=='+') {
-          nextChar
-          token = new Token(PLUS)
-        } else if (current=='-') {
-          nextChar
-          token = new Token(MINUS)
-        } else if (current=='*') {
-          nextChar
-          token = new Token(TIMES)
         } else if (current=='"') {
           var currstr = new StringBuffer
           nextChar
@@ -156,66 +122,9 @@ object Lexer extends Phase[File, Iterator[Token]] {
             currstr.append(current)
             nextChar
           }
-          if (keywords.contains(currstr.toString)) {
-            currstr.toString match {
-              case "object" =>
-                nextChar
-                token = new Token(OBJECT)
-              case "class" =>
-                nextChar
-                token = new Token(CLASS)
-              case "def" =>
-                nextChar
-                token = new Token(DEF)
-              case "override" =>
-                nextChar
-                token = new Token(OVERRIDE)
-              case "var" =>
-                nextChar
-                token = new Token(VAR)
-              case "Unit" =>
-                nextChar
-                token = new Token(UNIT)
-              case "String" =>
-                nextChar
-                token = new Token(STRING)
-              case "extends" =>
-                nextChar
-                token = new Token(EXTENDS)
-              case "Int" =>
-                nextChar
-                token = new Token(INT)
-              case "Boolean" =>
-                nextChar
-                token = new Token(BOOLEAN)
-              case "while" =>
-                nextChar
-                token = new Token(WHILE)
-              case "if" =>
-                nextChar
-                token = new Token(IF)
-              case "else" =>
-                nextChar
-                token = new Token(ELSE)
-              case "true" =>
-                nextChar
-                token = new Token(TRUE)
-              case "false" =>
-                nextChar
-                token = new Token(FALSE)
-              case "this" =>
-                nextChar
-                token = new Token(THIS)
-              case "null" =>
-                nextChar
-                token = new Token(NULL)
-              case "new" =>
-                nextChar
-                token = new Token(NEW)
-              case "println" =>
-                nextChar
-                token = new Token(PRINTLN)
-            }
+          if (keywords contains currstr.toString) {
+            token = keywords(currstr.toString)
+            nextChar
           } else {
             token = new ID(currstr.toString)
           }
