@@ -61,6 +61,10 @@ object Main {
     
     var iter = Lexer.run(ctx.file.get)(ctx)
 
-    var parser = Parser.run(iter)(ctx)
+    var tree = Parser.run(iter)(ctx)
+
+    if (ctx.doPrintMain) {
+      println(Printer.apply(tree))
+    }
   }
 }
