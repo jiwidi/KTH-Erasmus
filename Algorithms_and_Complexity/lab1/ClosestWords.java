@@ -8,10 +8,12 @@ import java.util.Map;
 
 public class ClosestWords {
   LinkedList<String> closestWords = null;
+
   int closestDistance = -1;
     static int maxDist = 9999;
     static int matrixSize = 50;
     static int M[][] = new int[matrixSize][matrixSize];
+
 
     // initiate M with base cases
     static {
@@ -21,14 +23,14 @@ public class ClosestWords {
 	}
     }
     int partDist(String w1, String w2, int w1len, int w2len,int[][] M) {
+
+      if (w1len == 0)
+        return w2len;
+      else if (w2len == 0)
+        return w1len;
       if (M[w1len][w2len]!=0){
           return M[w1len][w2len];
       }
-      if (w1len == 0)
-        return w2len;
-      if (w2len == 0)
-        return w1len;
-
       int res = M[w1len-1][w2len-1] +
   	(w1.charAt(w1len - 1) == w2.charAt(w2len - 1) ? 0 : 1);
       int addLetter = M[w1len-1][w2len] + 1;
@@ -62,32 +64,27 @@ public class ClosestWords {
       return M[w1len][w2len];
    }
 
+
     // int Distance(String w1, String w2) {
-
-    // 	int w1len=w1.length();
-    // 	int w2len=w2.length();
-    // 	int[][] M = new int[w1len+1][w2len+1];
-    // 	int ci=0;
-    // 	int cj=0;
-    // 	for (int i = 0; i < M.length; i++) {
-    // 	    for (int j = 0; j < M[i].length; j++) {
-    // 		M[i][j]=partDist(w1,w2,ci,cj,M);
-    // 		cj++;
-    // 	    }
-    // 	    ci++;
-    // 	    cj=0;
-    // 	    //System.out.println();
-    // 	}
-    // 	// for (int i = 0; i < M.length; i++) {
-    // 	//     for (int j = 0; j < M[i].length; j++) {
-    // 	//         System.out.print(M[i][j] + " ");
-    // 	//     }
-    // 	// 	  System.out.println();
-    // 	// }
-    // 	return M[w1len][w2len];
+    //   int w1len=w1.length();
+    //   int w2len=w2.length();
+    //   int[][] M = new int[w1len+1][w2len+1];
+    //   int ci=0;
+    //   int cj=0;
+    //   for (int i = 0; i < M.length; i++) {
+    //       for (int j = 0; j < M[i].length; j++) {
+    //           M[i][j]=partDist(w1,w2,ci,cj,M);
+    //           cj++;
+    //   }
+    //       ci++;
+    //       cj=0;
+    //   //System.out.println();
+    //   }
+    //   return M[w1len][w2len];
 
 
-    // }
+
+   
 
     int Distance(String word1, String dictword, String prevdictword){
 	int w1len = word1.length();
@@ -125,6 +122,7 @@ public class ClosestWords {
   public ClosestWords(String w, List<String> wordList) {
       String prevword = "";
     for (String s : wordList) {
+
         int dist = Distance(w, s, prevword);
 	 
       // System.out.println("d(" + w + "," + s + ")=" + dist);
@@ -139,6 +137,24 @@ public class ClosestWords {
       if (dist != maxDist) 
 	  prevword = s;
 
+// =======
+//       int dist;
+//       //System.out.println("d(" + w + "," + s + ")=" + dist);
+//       if ( closestDistance!=MAX && s.length() - w.length() > closestDistance){
+//         dist=MAX;
+//         break;
+//       }
+//       else{
+//         dist = Distance(w, s);
+//         if (dist < closestDistance || closestDistance == -1) {
+//           closestDistance = dist;
+//           closestWords = new LinkedList<String>();
+//           closestWords.add(s);
+//         }
+//         else if (dist == closestDistance)
+//           closestWords.add(s);
+//       }
+// >>>>>>> df709ce5decefc2aa589f29f0fcf4cd3553e1170
     }
   }
 
