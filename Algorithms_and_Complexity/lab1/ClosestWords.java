@@ -8,8 +8,9 @@ import java.util.Map;
 
 public class ClosestWords {
   LinkedList<String> closestWords = null;
-  int closestDistance = -1;
+
   int MAX=100000;
+    int closestDistance =MAX;
 
 
 
@@ -79,8 +80,9 @@ public class ClosestWords {
     for (String s : wordList) {
       int dist;
       //System.out.println("d(" + w + "," + s + ")=" + dist);
-      if (false && closestDistance!=-1 && s.length() - w.length() > closestDistance){
+      if ( closestDistance!=MAX && s.length() - w.length() > closestDistance){
         dist=MAX;
+        break;
       }
       else{
         dist = Distance(w, s);
