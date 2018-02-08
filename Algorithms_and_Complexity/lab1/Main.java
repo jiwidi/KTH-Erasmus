@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
 
@@ -22,22 +24,34 @@ public class Main {
   }
 
   public static void main(String args[]) throws IOException {
-    //    long t1 = System.currentTimeMillis();
+        //long t1 = System.currentTimeMillis();
     BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
     // Säkrast att specificera att UTF-8 ska användas, för vissa system har annan
     // standardinställning för teckenkodningen.
     List<String> wordList = readWordList(stdin);
+
     String word;
+    Map<String, ClosestWords> map = new HashMap<String, ClosestWords>();
     while ((word = stdin.readLine()) != null) {
-      ClosestWords closestWords = new ClosestWords(word, wordList);
-      System.out.println("a");
-      System.out.print(word + " (" + closestWords.getMinDistance() + ")");
-      for (String w : closestWords.getClosestWords())
-        System.out.print(" " + w);
-      System.out.println();
+      ClosestWords ww=map.get(word);
+      if(ww!=null){
+        ClosestWords closestWords = ww;
+        System.out.print(word + " (" + closestWords.getMinDistance() + ")");
+        for (String w : closestWords.getClosestWords())
+          System.out.print(" " + w);
+        System.out.println();
+      }
+      else{
+        ClosestWords closestWords = new ClosestWords(word, wordList);
+        System.out.print(word + " (" + closestWords.getMinDistance() + ")");
+        for (String w : closestWords.getClosestWords())
+          System.out.print(" " + w);
+        System.out.println();
+        map.put(word,closestWords);
+      }
     }
-    //    long tottime = (System.currentTimeMillis() - t1);
-    //    System.out.println("CPU time: " + tottime + " ms");
+        //long tottime = (System.currentTimeMillis() - t1);
+        //System.out.println("CPU time: " + tottime + " ms");
 
   }
 }
