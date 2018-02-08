@@ -30,6 +30,7 @@ public class Main {
     String word;
     while ((word = stdin.readLine()) != null) {
       ClosestWords closestWords = new ClosestWords(word, wordList);
+      System.out.println("a");
       System.out.print(word + " (" + closestWords.getMinDistance() + ")");
       for (String w : closestWords.getClosestWords())
         System.out.print(" " + w);

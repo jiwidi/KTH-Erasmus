@@ -40,3 +40,5 @@ CompilerConstruction/lab0/project/
 *.out
 *.app
 Artifical_intelligence/A1/Duck_Hunt/Player
+*.class
+*.ctxt
