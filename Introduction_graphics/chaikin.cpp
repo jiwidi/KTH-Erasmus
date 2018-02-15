@@ -55,23 +55,20 @@ void Chaikin::CornerCutting(const std::vector<vec3>& ControlPolygon,
 	std::vector<vec3> NewControlPolygon = ControlPolygon;
 	const size_t NumPointsPerPolygonLeg = 2;
 
-	if ((NumPointsPerPolygonLeg * NewControlPolygon.size() <= MinNumDesiredPoints))
+	Curve.clear();
+	Curve.reserve(NumPointsPerPolygonLeg * NewControlPolygon.size());
+
+	for (size_t i(0); i<NewControlPolygon.size(); i++)
 	{
-		Curve.clear();
-		Curve.reserve(NumPointsPerPolygonLeg * NewControlPolygon.size());
+		const vec3& LeftPoint = NewControlPolygon[i];
+		const vec3& RightPoint = NewControlPolygon[(i + 1) % NewControlPolygon.size()];
 
-		for (size_t i(0); i<NewControlPolygon.size(); i++)
-		{
-			const vec3& LeftPoint = NewControlPolygon[i];
-			const vec3& RightPoint = NewControlPolygon[(i + 1) % NewControlPolygon.size()];
-
-			Curve.push_back(0.75f * LeftPoint + 0.25f * RightPoint);
-			Curve.push_back(0.25f * LeftPoint + 0.75f * RightPoint);
-		}
-		if (Curve.size() <= MinNumDesiredPoints)
-		{
-			Chaikin::CornerCutting(Curve, MinNumDesiredPoints, Curve);
-		}
+		Curve.push_back(0.75f * LeftPoint + 0.25f * RightPoint);
+		Curve.push_back(0.25f * LeftPoint + 0.75f * RightPoint);
+	}
+	if (Curve.size() < MinNumDesiredPoints)
+	{
+		Chaikin::CornerCutting(Curve, MinNumDesiredPoints, Curve);
 	}
 }
 
